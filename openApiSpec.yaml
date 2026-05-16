@@ -1,0 +1,385 @@
+openapi: 3.1.0
+
+info:
+  title: Greatplaces API
+  description: RESTful API for storing and organizing great places.
+  version: 0.0.1
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+
+tags:
+  - name: Restaurants
+  - name: Lists
+  - name: Users
+
+paths:
+  /restaurants:
+    post:
+      summary: Add a new restaurant
+      description: Create a new restaurant in the database
+      operationId: addRestaurant
+      tags:
+        - Restaurants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRestaurantRequest'
+      responses:
+        '201':
+          description: Restaurant created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /restaurants/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RestaurantId'
+
+    get:
+      summary: Get a restaurant by ID
+      description: Retrieve full restaurant details including address and location
+      operationId: getRestaurantById
+      tags:
+        - Restaurants
+      responses:
+        '200':
+          description: Restaurant found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '404':
+          description: Restaurant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update a restaurant
+      description: Update an existing restaurant
+      operationId: updateRestaurant
+      tags:
+        - Restaurants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRestaurantRequest'
+      responses:
+        '200':
+          description: Restaurant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restaurant'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Restaurant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a restaurant
+      description: Delete a restaurant by its ID
+      operationId: deleteRestaurantById
+      tags:
+        - Restaurants
+      responses:
+        '204':
+          description: Restaurant deleted successfully
+        '404':
+          description: Restaurant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users:
+    post:
+      summary: Create a new user
+      description: Create a new user account
+      operationId: createUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete user account
+      description: Delete the authenticated user account
+      operationId: deleteUser
+      tags:
+        - Users
+      responses:
+        '204':
+          description: User deleted successfully
+
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    RestaurantId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    ErrorResponse:
+      type: object
+      description: RFC 9457 Problem Details response
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+
+        title:
+          type: string
+
+        status:
+          type: integer
+
+        detail:
+          type: string
+
+        instance:
+          type: string
+          format: uri
+
+    Restaurant:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+
+        description:
+          type:
+            - string
+            - "null"
+
+        street:
+          type:
+            - string
+            - "null"
+
+        city:
+          type:
+            - string
+            - "null"
+
+        postalCode:
+          type:
+            - string
+            - "null"
+
+        country:
+          type:
+            - string
+            - "null"
+
+        latitude:
+          type:
+            - number
+            - "null"
+          format: double
+          minimum: -90
+          maximum: 90
+
+        longitude:
+          type:
+            - number
+            - "null"
+          format: double
+          minimum: -180
+          maximum: 180
+
+        createdAt:
+          type: string
+          format: date-time
+
+    AddRestaurantRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+
+        description:
+          type: string
+          maxLength: 2000
+
+        street:
+          type: string
+          maxLength: 255
+
+        city:
+          type: string
+          maxLength: 255
+
+        postalCode:
+          type: string
+          maxLength: 20
+
+        country:
+          type: string
+          maxLength: 100
+
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    UpdateRestaurantRequest:
+      type: object
+      description: Partial restaurant update payload
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+
+        description:
+          type: string
+          maxLength: 2000
+
+        street:
+          type: string
+          maxLength: 255
+
+        city:
+          type: string
+          maxLength: 255
+
+        postalCode:
+          type: string
+          maxLength: 20
+
+        country:
+          type: string
+          maxLength: 100
+
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    CreateUserRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+
+        email:
+          type: string
+          format: email
+          maxLength: 255
+
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+
+    User:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+
+        username:
+          type: string
+
+        email:
+          type: string
+          format: email
+
+        createdAt:
+          type: string
+          format: date-time

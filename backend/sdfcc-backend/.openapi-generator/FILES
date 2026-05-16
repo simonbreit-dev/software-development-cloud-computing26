@@ -1,0 +1,9 @@
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/api/ApiUtil.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/api/RestaurantsApi.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/api/UsersApi.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/model/AddRestaurantRequest.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/model/CreateUserRequest.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/model/ErrorResponse.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/model/Restaurant.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/model/UpdateRestaurantRequest.java
+src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated/model/User.java
