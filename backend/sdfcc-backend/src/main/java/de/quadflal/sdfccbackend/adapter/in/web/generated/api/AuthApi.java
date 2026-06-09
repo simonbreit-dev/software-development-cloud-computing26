@@ -6,7 +6,8 @@
 package de.quadflal.sdfccbackend.adapter.in.web.generated.api;
 
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.ErrorResponse;
-import de.quadflal.sdfccbackend.adapter.in.web.generated.model.UserResponse;
+import de.quadflal.sdfccbackend.adapter.in.web.generated.model.LoginRequest;
+import de.quadflal.sdfccbackend.adapter.in.web.generated.model.LoginResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,24 +22,27 @@ import jakarta.annotation.Generated;
 
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", comments = "Generator version: 7.22.0")
 @Validated
-public interface UsersApi {
+public interface AuthApi {
 
-    String PATH_GET_CURRENT_USER = "/users/me";
+    String PATH_LOGIN = "/auth/login";
     /**
-     * GET /users/me : Get the authenticated user
-     * Returns the profile of the currently authenticated user.
+     * POST /auth/login : Authenticate user and obtain a JWT
+     * Exchange username/email and password for a signed JWT access token.
      *
-     * @return Current user profile (status code 200)
+     * @param loginRequest  (required)
+     * @return Authentication successful (status code 200)
+     *         or The request payload or parameters are invalid (status code 400)
      *         or Authentication is required or the token is invalid (status code 401)
      *         or An unexpected server-side error occurred (status code 500)
      */
     @RequestMapping(
-        method = RequestMethod.GET,
-        value = UsersApi.PATH_GET_CURRENT_USER,
-        produces = { "application/json", "application/problem+json" }
+        method = RequestMethod.POST,
+        value = AuthApi.PATH_LOGIN,
+        produces = { "application/json", "application/problem+json" },
+        consumes = { "application/json" }
     )
-    ResponseEntity<UserResponse> getCurrentUser(
-        
+    ResponseEntity<LoginResponse> login(
+         @Valid @RequestBody LoginRequest loginRequest
     );
 
 }

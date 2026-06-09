@@ -16,74 +16,51 @@ import java.util.*;
 import jakarta.annotation.Generated;
 
 /**
- * CreateUserRequest
+ * LoginRequest
  */
 
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", comments = "Generator version: 7.22.0")
-public class CreateUserRequest implements Serializable {
+public class LoginRequest implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private String username;
-
-  private String email;
+  private String usernameOrEmail;
 
   private String password;
 
-  public CreateUserRequest() {
+  public LoginRequest() {
     super();
   }
 
   /**
    * Constructor with only required parameters
    */
-  public CreateUserRequest(String username, String email, String password) {
-    this.username = username;
-    this.email = email;
+  public LoginRequest(String usernameOrEmail, String password) {
+    this.usernameOrEmail = usernameOrEmail;
     this.password = password;
   }
 
-  public CreateUserRequest username(String username) {
-    this.username = username;
+  public LoginRequest usernameOrEmail(String usernameOrEmail) {
+    this.usernameOrEmail = usernameOrEmail;
     return this;
   }
 
   /**
-   * Get username
-   * @return username
+   * Get usernameOrEmail
+   * @return usernameOrEmail
    */
-  @NotNull @Size(min = 3, max = 50) 
-  @JsonProperty("username")
-  public String getUsername() {
-    return username;
+  @NotNull @Size(min = 3, max = 255) 
+  @JsonProperty("usernameOrEmail")
+  public String getUsernameOrEmail() {
+    return usernameOrEmail;
   }
 
-  @JsonProperty("username")
-  public void setUsername(String username) {
-    this.username = username;
+  @JsonProperty("usernameOrEmail")
+  public void setUsernameOrEmail(String usernameOrEmail) {
+    this.usernameOrEmail = usernameOrEmail;
   }
 
-  public CreateUserRequest email(String email) {
-    this.email = email;
-    return this;
-  }
-
-  /**
-   * Get email
-   * @return email
-   */
-  @NotNull @Size(max = 255) @jakarta.validation.constraints.Email 
-  @JsonProperty("email")
-  public String getEmail() {
-    return email;
-  }
-
-  @JsonProperty("email")
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public CreateUserRequest password(String password) {
+  public LoginRequest password(String password) {
     this.password = password;
     return this;
   }
@@ -111,24 +88,22 @@ public class CreateUserRequest implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CreateUserRequest createUserRequest = (CreateUserRequest) o;
-    return Objects.equals(this.username, createUserRequest.username) &&
-        Objects.equals(this.email, createUserRequest.email) &&
-        Objects.equals(this.password, createUserRequest.password);
+    LoginRequest loginRequest = (LoginRequest) o;
+    return Objects.equals(this.usernameOrEmail, loginRequest.usernameOrEmail) &&
+        Objects.equals(this.password, loginRequest.password);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(username, email, password);
+    return Objects.hash(usernameOrEmail, password);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CreateUserRequest {\n");
-    sb.append("    username: ").append(toIndentedString(username)).append("\n");
-    sb.append("    email: ").append(toIndentedString(email)).append("\n");
-    sb.append("    password: ").append(toIndentedString(password)).append("\n");
+    sb.append("class LoginRequest {\n");
+    sb.append("    usernameOrEmail: ").append(toIndentedString(usernameOrEmail)).append("\n");
+    sb.append("    password: ").append("*").append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -4,7 +4,13 @@ import java.net.URI;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import de.quadflal.sdfccbackend.adapter.in.web.generated.model.FieldError;
 import java.net.URI;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.lang.Nullable;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
@@ -17,7 +23,7 @@ import java.util.*;
 import jakarta.annotation.Generated;
 
 /**
- * RFC 9457 Problem Details response
+ * RFC 9457 Problem Details response. The &#x60;type&#x60; URI should resolve to human-readable documentation describing the problem type. The optional &#x60;errors&#x60; extension carries field-level validation failures. 
  */
 
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", comments = "Generator version: 7.22.0")
@@ -34,6 +40,12 @@ public class ErrorResponse implements Serializable {
   private @Nullable String detail;
 
   private @Nullable URI instance;
+
+  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+  private @Nullable OffsetDateTime timestamp;
+
+  @Valid
+  private List<@Valid FieldError> errors = new ArrayList<>();
 
   public ErrorResponse() {
     super();
@@ -54,7 +66,7 @@ public class ErrorResponse implements Serializable {
   }
 
   /**
-   * Get type
+   * A URI reference that identifies the problem type. When dereferenced, it SHOULD provide human-readable documentation for the problem. 
    * @return type
    */
   @NotNull @Valid 
@@ -74,7 +86,7 @@ public class ErrorResponse implements Serializable {
   }
 
   /**
-   * Get title
+   * A short, human-readable summary of the problem type.
    * @return title
    */
   @NotNull 
@@ -94,7 +106,7 @@ public class ErrorResponse implements Serializable {
   }
 
   /**
-   * Get status
+   * The HTTP status code for this occurrence of the problem.
    * @return status
    */
   @NotNull 
@@ -114,7 +126,7 @@ public class ErrorResponse implements Serializable {
   }
 
   /**
-   * Get detail
+   * A human-readable explanation specific to this occurrence.
    * @return detail
    */
   
@@ -134,7 +146,7 @@ public class ErrorResponse implements Serializable {
   }
 
   /**
-   * Get instance
+   * A URI reference identifying the specific occurrence of the problem.
    * @return instance
    */
   @Valid 
@@ -146,6 +158,54 @@ public class ErrorResponse implements Serializable {
   @JsonProperty("instance")
   public void setInstance(@Nullable URI instance) {
     this.instance = instance;
+  }
+
+  public ErrorResponse timestamp(@Nullable OffsetDateTime timestamp) {
+    this.timestamp = timestamp;
+    return this;
+  }
+
+  /**
+   * The date and time at which the problem occurred (extension field).
+   * @return timestamp
+   */
+  @Valid 
+  @JsonProperty("timestamp")
+  public @Nullable OffsetDateTime getTimestamp() {
+    return timestamp;
+  }
+
+  @JsonProperty("timestamp")
+  public void setTimestamp(@Nullable OffsetDateTime timestamp) {
+    this.timestamp = timestamp;
+  }
+
+  public ErrorResponse errors(List<@Valid FieldError> errors) {
+    this.errors = errors;
+    return this;
+  }
+
+  public ErrorResponse addErrorsItem(FieldError errorsItem) {
+    if (this.errors == null) {
+      this.errors = new ArrayList<>();
+    }
+    this.errors.add(errorsItem);
+    return this;
+  }
+
+  /**
+   * Optional list of field-level validation errors (extension field).
+   * @return errors
+   */
+  @Valid 
+  @JsonProperty("errors")
+  public List<@Valid FieldError> getErrors() {
+    return errors;
+  }
+
+  @JsonProperty("errors")
+  public void setErrors(List<@Valid FieldError> errors) {
+    this.errors = errors;
   }
 
   @Override
@@ -161,12 +221,14 @@ public class ErrorResponse implements Serializable {
         Objects.equals(this.title, errorResponse.title) &&
         Objects.equals(this.status, errorResponse.status) &&
         Objects.equals(this.detail, errorResponse.detail) &&
-        Objects.equals(this.instance, errorResponse.instance);
+        Objects.equals(this.instance, errorResponse.instance) &&
+        Objects.equals(this.timestamp, errorResponse.timestamp) &&
+        Objects.equals(this.errors, errorResponse.errors);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, title, status, detail, instance);
+    return Objects.hash(type, title, status, detail, instance, timestamp, errors);
   }
 
   @Override
@@ -178,6 +240,8 @@ public class ErrorResponse implements Serializable {
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
     sb.append("    detail: ").append(toIndentedString(detail)).append("\n");
     sb.append("    instance: ").append(toIndentedString(instance)).append("\n");
+    sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
+    sb.append("    errors: ").append(toIndentedString(errors)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -7,7 +7,10 @@ package de.quadflal.sdfccbackend.adapter.in.web.generated.api;
 
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.AddRestaurantRequest;
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.ErrorResponse;
-import de.quadflal.sdfccbackend.adapter.in.web.generated.model.Restaurant;
+import org.springframework.lang.Nullable;
+import de.quadflal.sdfccbackend.adapter.in.web.generated.model.RestaurantPage;
+import de.quadflal.sdfccbackend.adapter.in.web.generated.model.RestaurantResponse;
+import java.net.URI;
 import java.util.UUID;
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.UpdateRestaurantRequest;
 import org.springframework.http.ResponseEntity;
@@ -29,19 +32,21 @@ public interface RestaurantsApi {
     String PATH_ADD_RESTAURANT = "/restaurants";
     /**
      * POST /restaurants : Add a new restaurant
-     * Create a new restaurant in the database
+     * Create a new restaurant. Requires authentication.
      *
      * @param addRestaurantRequest  (required)
      * @return Restaurant created successfully (status code 201)
-     *         or Invalid request body (status code 400)
+     *         or The request payload or parameters are invalid (status code 400)
+     *         or Authentication is required or the token is invalid (status code 401)
+     *         or An unexpected server-side error occurred (status code 500)
      */
     @RequestMapping(
         method = RequestMethod.POST,
         value = RestaurantsApi.PATH_ADD_RESTAURANT,
-        produces = { "application/json" },
+        produces = { "application/json", "application/problem+json" },
         consumes = { "application/json" }
     )
-    ResponseEntity<Restaurant> addRestaurant(
+    ResponseEntity<RestaurantResponse> addRestaurant(
          @Valid @RequestBody AddRestaurantRequest addRestaurantRequest
     );
 
@@ -49,16 +54,18 @@ public interface RestaurantsApi {
     String PATH_DELETE_RESTAURANT_BY_ID = "/restaurants/{id}";
     /**
      * DELETE /restaurants/{id} : Delete a restaurant
-     * Delete a restaurant by its ID
+     * Delete a restaurant by its ID. Requires authentication.
      *
      * @param id  (required)
      * @return Restaurant deleted successfully (status code 204)
-     *         or Restaurant not found (status code 404)
+     *         or Authentication is required or the token is invalid (status code 401)
+     *         or The requested resource was not found (status code 404)
+     *         or An unexpected server-side error occurred (status code 500)
      */
     @RequestMapping(
         method = RequestMethod.DELETE,
         value = RestaurantsApi.PATH_DELETE_RESTAURANT_BY_ID,
-        produces = { "application/json" }
+        produces = { "application/problem+json" }
     )
     ResponseEntity<Void> deleteRestaurantById(
          @PathVariable("id") UUID id
@@ -68,40 +75,73 @@ public interface RestaurantsApi {
     String PATH_GET_RESTAURANT_BY_ID = "/restaurants/{id}";
     /**
      * GET /restaurants/{id} : Get a restaurant by ID
-     * Retrieve full restaurant details including address and location
+     * Retrieve full restaurant details including address and location.
      *
      * @param id  (required)
      * @return Restaurant found (status code 200)
-     *         or Restaurant not found (status code 404)
+     *         or The requested resource was not found (status code 404)
+     *         or An unexpected server-side error occurred (status code 500)
      */
     @RequestMapping(
         method = RequestMethod.GET,
         value = RestaurantsApi.PATH_GET_RESTAURANT_BY_ID,
-        produces = { "application/json" }
+        produces = { "application/json", "application/problem+json" }
     )
-    ResponseEntity<Restaurant> getRestaurantById(
+    ResponseEntity<RestaurantResponse> getRestaurantById(
          @PathVariable("id") UUID id
+    );
+
+
+    String PATH_LIST_RESTAURANTS = "/restaurants";
+    /**
+     * GET /restaurants : List restaurants
+     * Retrieve a paginated list of restaurants. Supports free-text search by name and filtering by city or country. 
+     *
+     * @param page Zero-based page index (optional, default to 0)
+     * @param size Number of items per page (optional, default to 20)
+     * @param sort Sorting criteria in the format &#x60;property,(asc|desc)&#x60;. Multiple sort parameters are supported, e.g. &#x60;?sort&#x3D;name,asc&amp;sort&#x3D;createdAt,desc&#x60;.  (optional)
+     * @param search Free-text search across restaurant name and description (optional)
+     * @param city  (optional)
+     * @param country  (optional)
+     * @return Page of restaurants (status code 200)
+     *         or The request payload or parameters are invalid (status code 400)
+     *         or An unexpected server-side error occurred (status code 500)
+     */
+    @RequestMapping(
+        method = RequestMethod.GET,
+        value = RestaurantsApi.PATH_LIST_RESTAURANTS,
+        produces = { "application/json", "application/problem+json" }
+    )
+    ResponseEntity<RestaurantPage> listRestaurants(
+        @Min(value = 0)  @Valid @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @Min(value = 1) @Max(value = 100)  @Valid @RequestParam(value = "size", required = false, defaultValue = "20") Integer size,
+         @Valid @RequestParam(value = "sort", required = false) @Nullable List<String> sort,
+        @Size(max = 100)  @Valid @RequestParam(value = "search", required = false) @Nullable String search,
+        @Size(max = 255)  @Valid @RequestParam(value = "city", required = false) @Nullable String city,
+        @Size(max = 100)  @Valid @RequestParam(value = "country", required = false) @Nullable String country
     );
 
 
     String PATH_UPDATE_RESTAURANT = "/restaurants/{id}";
     /**
-     * PUT /restaurants/{id} : Update a restaurant
-     * Update an existing restaurant
+     * PATCH /restaurants/{id} : Partially update a restaurant
+     * Apply a partial update to an existing restaurant. Only fields present in the request body are modified; omitted fields remain unchanged. Requires authentication. 
      *
      * @param id  (required)
      * @param updateRestaurantRequest  (required)
      * @return Restaurant updated successfully (status code 200)
-     *         or Invalid request body (status code 400)
-     *         or Restaurant not found (status code 404)
+     *         or The request payload or parameters are invalid (status code 400)
+     *         or Authentication is required or the token is invalid (status code 401)
+     *         or The requested resource was not found (status code 404)
+     *         or An unexpected server-side error occurred (status code 500)
      */
     @RequestMapping(
-        method = RequestMethod.PUT,
+        method = RequestMethod.PATCH,
         value = RestaurantsApi.PATH_UPDATE_RESTAURANT,
-        produces = { "application/json" },
+        produces = { "application/json", "application/problem+json" },
         consumes = { "application/json" }
     )
-    ResponseEntity<Restaurant> updateRestaurant(
+    ResponseEntity<RestaurantResponse> updateRestaurant(
          @PathVariable("id") UUID id,
          @Valid @RequestBody UpdateRestaurantRequest updateRestaurantRequest
     );

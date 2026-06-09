@@ -16,7 +16,7 @@ import java.util.*;
 import jakarta.annotation.Generated;
 
 /**
- * Partial restaurant update payload
+ * Partial restaurant update payload. Only fields included in the request body are applied; omitted fields are left unchanged. At least one field must be present. 
  */
 
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", comments = "Generator version: 7.22.0")

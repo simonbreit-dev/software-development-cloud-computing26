@@ -19,11 +19,11 @@ import java.util.*;
 import jakarta.annotation.Generated;
 
 /**
- * User
+ * UserResponse
  */
 
 @Generated(value = "org.openapitools.codegen.languages.SpringCodegen", comments = "Generator version: 7.22.0")
-public class User implements Serializable {
+public class UserResponse implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
@@ -36,21 +36,21 @@ public class User implements Serializable {
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
   private OffsetDateTime createdAt;
 
-  public User() {
+  public UserResponse() {
     super();
   }
 
   /**
    * Constructor with only required parameters
    */
-  public User(UUID id, String username, String email, OffsetDateTime createdAt) {
+  public UserResponse(UUID id, String username, String email, OffsetDateTime createdAt) {
     this.id = id;
     this.username = username;
     this.email = email;
     this.createdAt = createdAt;
   }
 
-  public User id(UUID id) {
+  public UserResponse id(UUID id) {
     this.id = id;
     return this;
   }
@@ -70,7 +70,7 @@ public class User implements Serializable {
     this.id = id;
   }
 
-  public User username(String username) {
+  public UserResponse username(String username) {
     this.username = username;
     return this;
   }
@@ -90,7 +90,7 @@ public class User implements Serializable {
     this.username = username;
   }
 
-  public User email(String email) {
+  public UserResponse email(String email) {
     this.email = email;
     return this;
   }
@@ -110,7 +110,7 @@ public class User implements Serializable {
     this.email = email;
   }
 
-  public User createdAt(OffsetDateTime createdAt) {
+  public UserResponse createdAt(OffsetDateTime createdAt) {
     this.createdAt = createdAt;
     return this;
   }
@@ -138,11 +138,11 @@ public class User implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    User user = (User) o;
-    return Objects.equals(this.id, user.id) &&
-        Objects.equals(this.username, user.username) &&
-        Objects.equals(this.email, user.email) &&
-        Objects.equals(this.createdAt, user.createdAt);
+    UserResponse userResponse = (UserResponse) o;
+    return Objects.equals(this.id, userResponse.id) &&
+        Objects.equals(this.username, userResponse.username) &&
+        Objects.equals(this.email, userResponse.email) &&
+        Objects.equals(this.createdAt, userResponse.createdAt);
   }
 
   @Override
@@ -153,7 +153,7 @@ public class User implements Serializable {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class User {\n");
+    sb.append("class UserResponse {\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    username: ").append(toIndentedString(username)).append("\n");
     sb.append("    email: ").append(toIndentedString(email)).append("\n");
