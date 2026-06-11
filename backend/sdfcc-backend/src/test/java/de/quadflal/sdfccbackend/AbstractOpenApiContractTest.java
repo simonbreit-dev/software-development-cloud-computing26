@@ -13,7 +13,7 @@ import java.util.UUID;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 @SpringBootTest
-abstract class AbstractOpenApiContractTest {
+public abstract class AbstractOpenApiContractTest {
 
     protected static final String JSON = MediaType.APPLICATION_JSON_VALUE;
     protected static final UUID RESOURCE_ID = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");

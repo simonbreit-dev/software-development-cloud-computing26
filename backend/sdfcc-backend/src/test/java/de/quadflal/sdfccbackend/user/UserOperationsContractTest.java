@@ -1,5 +1,6 @@
-package de.quadflal.sdfccbackend;
+package de.quadflal.sdfccbackend.user;
 
+import de.quadflal.sdfccbackend.AbstractOpenApiContractTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
