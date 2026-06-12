@@ -5,6 +5,7 @@ import de.quadflal.sdfccbackend.adapter.in.web.generated.model.AddRestaurantRequ
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.RestaurantPage;
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.RestaurantResponse;
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.UpdateRestaurantRequest;
+import de.quadflal.sdfccbackend.port.in.web.RestaurantPort;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,11 @@ import java.util.UUID;
 @RestController
 public class RestaurantController implements RestaurantsApi {
 
+    private RestaurantPort restaurantPort;
+
+    RestaurantController(RestaurantPort restaurantPort) {
+        this.restaurantPort = restaurantPort;
+    }
 
     @Override
     public ResponseEntity<RestaurantResponse> addRestaurant(AddRestaurantRequest addRestaurantRequest) {
