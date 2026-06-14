@@ -5,14 +5,14 @@ OPENAPI_IMAGE := openapitools/openapi-generator-cli:v7.22.0
 SPEC_FILE     := openApiSpec.yaml
 
 # Generator config lives inside the backend module
-CONFIG_FILE   := backend/sdfcc-backend/api/generator-config.yaml
+CONFIG_FILE   := backend/api/generator-config.yaml
 
 # Output target is the backend module root (generator writes into src/ from here)
-OUTPUT_DIR    := backend/sdfcc-backend
+OUTPUT_DIR    := backend/
 
 # The generated sources — used by CI to detect drift
 # Adjust the package path to match your actual Java package
-GENERATED_DIR := backend/sdfcc-backend/src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated
+GENERATED_DIR := backend/src/main/java/de/quadflal/sdfccbackend/adapter/in/web/generated
 
 # -----------------------------------------------------------------------------
 # Platform detection
