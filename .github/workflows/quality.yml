@@ -20,8 +20,8 @@ permissions:
   contents: read
 
 jobs:
-  sonar:
-    name: Sonar analysis
+  local-quality:
+    name: Local quality checks
     runs-on: ubuntu-latest
 
     steps:
@@ -43,26 +43,3 @@ jobs:
       - name: Verify with coverage
         working-directory: backend
         run: ./mvnw -B clean verify
-
-      - name: SonarCloud analysis
-        working-directory: backend
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL || 'https://sonarcloud.io' }}
-          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
-          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-        run: |
-          test -n "${SONAR_TOKEN}" || (echo "SONAR_TOKEN secret is required" && exit 1)
-          test -n "${SONAR_PROJECT_KEY}" || (echo "SONAR_PROJECT_KEY variable is required" && exit 1)
-
-          sonar_args=(
-            -Dsonar.host.url="${SONAR_HOST_URL}"
-            -Dsonar.projectKey="${SONAR_PROJECT_KEY}"
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-          )
-
-          if [ -n "${SONAR_ORGANIZATION}" ]; then
-            sonar_args+=(-Dsonar.organization="${SONAR_ORGANIZATION}")
-          fi
-
-          ./mvnw -B sonar:sonar "${sonar_args[@]}"
