@@ -28,9 +28,6 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
       OTEL_METRIC_EXPORT_INTERVAL: ${OTEL_METRIC_EXPORT_INTERVAL:-15000}
       JAVA_OPTS: ${JAVA_OPTS:-}
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - app
       - observability

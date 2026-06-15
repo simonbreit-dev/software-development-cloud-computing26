@@ -1,0 +1,126 @@
+# Default values for sdfcc-backend.
+#
+# This chart deploys only the backend application. It does not deploy PostgreSQL,
+# an ingress controller, or Nginx Proxy Manager.
+#
+# Exposure modes:
+#
+# Mode A: Kubernetes Ingress
+# - Set ingress.enabled=true.
+# - Keep service.type=ClusterIP.
+# - Nginx Proxy Manager is not needed, or it points to your ingress controller.
+#
+# Mode B: Nginx Proxy Manager outside Kubernetes
+# - Set ingress.enabled=false.
+# - Set service.type=NodePort.
+# - Set service.nodePort to a fixed port, for example 30080.
+# - Configure NPM to forward to http://<node-ip>:30080.
+
+replicaCount: 1
+
+image:
+  repository: sdfcc-backend
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+automountServiceAccountToken: false
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+containerPort: 8080
+
+# Plain literal environment variables placed directly on the container.
+env: {}
+
+# Non-sensitive configuration rendered into a ConfigMap and loaded with envFrom.
+config:
+  SPRING_PROFILES_ACTIVE: "demo"
+  SERVER_PORT: "8080"
+
+# Sensitive configuration rendered into a Secret and loaded with envFrom.
+# Leave values empty here and provide them through your Flux HelmRelease values,
+# SOPS, Sealed Secrets, External Secrets, or another secret management process.
+secret:
+  enabled: true
+  existingSecretName: ""
+  data:
+    SPRING_DATASOURCE_URL: ""
+    SPRING_DATASOURCE_USERNAME: ""
+    SPRING_DATASOURCE_PASSWORD: ""
+
+service:
+  # ClusterIP example for internal access or Kubernetes Ingress:
+  # type: ClusterIP
+  #
+  # NodePort example for Nginx Proxy Manager outside Kubernetes:
+  # type: NodePort
+  # nodePort: 30080
+  type: ClusterIP
+  port: 8080
+  targetPort: http
+  nodePort: null
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+
+livenessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 6
+
+readinessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 6
+
+startupProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 30
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

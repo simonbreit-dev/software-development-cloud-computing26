@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM eclipse-temurin:25-jdk-jammy AS build
+FROM eclipse-temurin:21-jdk-jammy AS build
 
 WORKDIR /workspace/backend
 
@@ -18,7 +18,7 @@ ARG MAVEN_BUILD_ARGS="-DskipTests"
 RUN ./mvnw -B ${MAVEN_BUILD_ARGS} package && \
     cp target/*.jar /tmp/sdfcc-backend.jar
 
-FROM eclipse-temurin:25-jre-jammy AS runtime
+FROM eclipse-temurin:21-jre-jammy AS runtime
 
 RUN groupadd --system spring && \
     useradd --system --gid spring --home-dir /app --shell /usr/sbin/nologin spring
