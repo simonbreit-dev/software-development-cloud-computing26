@@ -1,0 +1,35 @@
+generatorName: spring
+library: spring-boot
+
+additionalProperties:
+  # --- Core generation behavior ---
+  interfaceOnly: true
+  skipDefaultInterface: true
+  useSpringBoot4: true
+  useTags: true
+
+  # --- Package layout — update com.sdfcc to match your pom.xml <groupId> ---
+  apiPackage: de.quadflal.sdfccbackend.adapter.in.web.generated.api
+  modelPackage: de.quadflal.sdfccbackend.adapter.in.web.generated.model
+  invokerPackage: de.quadflal.sdfccbackend.adapter.in.web.generated
+
+  # --- Java config ---
+  dateLibrary: java8
+  serializationLibrary: jackson
+  openApiNullable: false
+  serializableModel: true
+  delegatePattern: false
+
+  # --- CI stability ---
+  hideGenerationTimestamp: true
+
+  # --- Validation ---
+  useBeanValidation: true
+  performBeanValidation: true
+  useOptional: false
+
+  # --- Suppress files you manage yourself ---
+  generateSupportingFiles: false
+
+  documentationProvider: none
+  annotationLibrary: none

@@ -1,0 +1,194 @@
+prometheus.remote_write "default" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+
+prometheus.scrape "stack" {
+  targets = [
+    { "__address__" = "prometheus:9090", "job" = "prometheus" },
+    { "__address__" = "loki:3100", "job" = "loki" },
+    { "__address__" = "tempo:3200", "job" = "tempo" },
+    { "__address__" = "grafana:3000", "job" = "grafana" },
+    { "__address__" = "alloy:12345", "job" = "alloy" },
+  ]
+
+  forward_to      = [prometheus.remote_write.default.receiver]
+  scrape_interval = "15s"
+}
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker_metrics" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    // Docker label observability.metrics=true. Dots are normalized to underscores
+    // in Docker discovery meta labels.
+    source_labels = ["__meta_docker_container_label_observability_metrics"]
+    regex         = "true"
+    action        = "keep"
+  }
+
+  rule {
+    // Keep only the discovered internal container port that matches
+    // observability.metrics_port. Host-published ports are intentionally ignored.
+    source_labels = ["__meta_docker_port_private"]
+    target_label  = "__meta_docker_container_label_observability_metrics_port"
+    action        = "keepequal"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_network_ip", "__meta_docker_port_private"]
+    separator     = ":"
+    target_label  = "__address__"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_metrics_path"]
+    regex         = "(.+)"
+    target_label  = "__metrics_path__"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "(.+)"
+    target_label  = "compose_project"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "(.+)"
+    target_label  = "compose_service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service", "__meta_docker_container_name"]
+    regex         = "(.+);.*|;/(.*)"
+    replacement   = "$1$2"
+    target_label  = "service_name"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "docker-services"
+  }
+}
+
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    // Docker label observability.logs=true.
+    source_labels = ["__meta_docker_container_label_observability_logs"]
+    regex         = "true"
+    action        = "keep"
+  }
+}
+
+discovery.relabel "docker_log_labels" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "(.+)"
+    target_label  = "compose_project"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "(.+)"
+    target_label  = "compose_service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service", "__meta_docker_container_name"]
+    regex         = "(.+);.*|;/(.*)"
+    replacement   = "$1$2"
+    target_label  = "service_name"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "docker-logs"
+  }
+}
+
+prometheus.scrape "docker_services" {
+  targets         = discovery.relabel.docker_metrics.output
+  forward_to      = [prometheus.remote_write.default.receiver]
+  scrape_interval = "15s"
+}
+
+loki.source.docker "docker_services" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.docker_logs.output
+  labels        = { platform = "docker" }
+  relabel_rules = discovery.relabel.docker_log_labels.rules
+  forward_to    = [loki.write.default.receiver]
+}
+
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+    logs    = [otelcol.processor.attributes.loki_labels.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+otelcol.processor.attributes "loki_labels" {
+  action {
+    key    = "loki.resource.labels"
+    action = "insert"
+    value  = "service.name, service.namespace, deployment.environment"
+  }
+
+  output {
+    logs = [otelcol.exporter.loki.default.input]
+  }
+}
+
+otelcol.exporter.loki "default" {
+  forward_to = [loki.write.default.receiver]
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

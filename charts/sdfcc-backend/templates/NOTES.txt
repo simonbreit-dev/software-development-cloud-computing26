@@ -1,0 +1,21 @@
+{{- if .Values.ingress.enabled }}
+The SDFCC backend was deployed with Kubernetes Ingress enabled.
+
+Ingress hosts:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else if eq .Values.service.type "NodePort" }}
+The SDFCC backend was deployed without Kubernetes Ingress.
+
+Use Nginx Proxy Manager or another external reverse proxy to forward to:
+  http://<node-ip>:{{ .Values.service.nodePort | default "<assigned-node-port>" }}
+{{- else }}
+The SDFCC backend was deployed without Kubernetes Ingress.
+
+The service is internal to the cluster:
+  {{ include "sdfcc-backend.fullname" . }}:{{ .Values.service.port }}
+{{- end }}
+
+Database configuration must be provided through environment variables from the
+generated Secret or an existing Secret. This chart does not deploy PostgreSQL.

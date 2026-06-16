@@ -1,0 +1,28 @@
+# Build files — we own these
+pom.xml
+build.gradle
+settings.gradle
+gradlew
+gradlew.bat
+.gradle/
+
+# Application bootstrap — we own this
+src/main/java/**/Application.java
+src/main/resources/application.properties
+src/main/resources/application.yml
+
+# Tests — we own these
+src/test/**
+
+# IDE + project files
+.idea/
+*.iml
+.classpath
+.project
+
+# Docker/infra — we own these
+Dockerfile
+docker-compose.yml
+
+# Docs we manage
+README.md

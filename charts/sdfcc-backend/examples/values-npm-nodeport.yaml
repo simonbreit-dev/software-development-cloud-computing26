@@ -1,0 +1,8 @@
+ingress:
+  enabled: false
+
+service:
+  type: NodePort
+  port: 8080
+  targetPort: http
+  nodePort: 30080

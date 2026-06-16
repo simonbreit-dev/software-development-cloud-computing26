@@ -1,0 +1,917 @@
+openapi: 3.1.0
+
+info:
+  title: Greatplaces API
+  description: |
+    RESTful API for storing and organizing great places of interest such as
+    restaurants, cafes, and bars. Browsing places and lists is public, while
+    creating, updating, and deleting resources requires JWT authentication.
+
+    This API is designed for a **single-user instance**. There is no
+    registration endpoint — the user account is pre-configured at deployment
+    time. The authenticated user manages all mutable resources.
+  version: 0.0.1
+  contact:
+    name: Greatplaces Team
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: http://localhost:8080/v1
+    description: Local development server
+
+tags:
+  - name: Auth
+    description: Authentication and token issuance
+  - name: Restaurants
+    description: Manage restaurants and other places of interest
+  - name: Lists
+    description: Curated collections of restaurants
+  - name: Users
+    description: User account management
+
+security: []   # Endpoints are public by default; protected endpoints opt-in
+
+paths:
+
+  # ---------------------------------------------------------------------------
+  # Auth
+  # ---------------------------------------------------------------------------
+  /auth/login:
+    post:
+      summary: Authenticate user and obtain a JWT
+      description: Exchange username/email and password for a signed JWT access token.
+      operationId: login
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ---------------------------------------------------------------------------
+  # Restaurants
+  # ---------------------------------------------------------------------------
+  /restaurants:
+    get:
+      summary: List restaurants
+      description: |
+        Retrieve a paginated list of restaurants. Supports free-text search by
+        name and filtering by city or country.
+      operationId: listRestaurants
+      tags:
+        - Restaurants
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - name: search
+          in: query
+          description: Free-text search across restaurant name and description
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: country
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        '200':
+          description: Page of restaurants
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add a new restaurant
+      description: Create a new restaurant. Requires authentication.
+      operationId: addRestaurant
+      tags:
+        - Restaurants
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRestaurantRequest'
+      responses:
+        '201':
+          description: Restaurant created successfully
+          headers:
+            Location:
+              description: URI of the newly created restaurant
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /restaurants/{id}:
+    parameters:
+      - $ref: '#/components/parameters/RestaurantId'
+
+    get:
+      summary: Get a restaurant by ID
+      description: Retrieve full restaurant details including address and location.
+      operationId: getRestaurantById
+      tags:
+        - Restaurants
+      responses:
+        '200':
+          description: Restaurant found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Partially update a restaurant
+      description: |
+        Apply a partial update to an existing restaurant. Only fields present
+        in the request body are modified; omitted fields remain unchanged.
+        Requires authentication.
+      operationId: updateRestaurant
+      tags:
+        - Restaurants
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRestaurantRequest'
+      responses:
+        '200':
+          description: Restaurant updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete a restaurant
+      description: Delete a restaurant by its ID. Requires authentication.
+      operationId: deleteRestaurantById
+      tags:
+        - Restaurants
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Restaurant deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ---------------------------------------------------------------------------
+  # Lists
+  # ---------------------------------------------------------------------------
+  /lists:
+    get:
+      summary: List curated restaurant lists
+      description: |
+        Retrieve a paginated collection of curated lists. Public endpoint.
+        Since this is a single-user instance, all lists belong to the same owner.
+      operationId: listLists
+      tags:
+        - Lists
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Page of lists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantListPage'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new list
+      description: Create a new curated list of restaurants. Requires authentication.
+      operationId: createList
+      tags:
+        - Lists
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateListRequest'
+      responses:
+        '201':
+          description: List created successfully
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /lists/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ListId'
+
+    get:
+      summary: Get a list by ID
+      operationId: getListById
+      tags:
+        - Lists
+      responses:
+        '200':
+          description: List found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Partially update a list
+      description: |
+        Apply a partial update to list metadata (name, description). Only
+        fields present in the request body are modified. Requires authentication.
+      operationId: updateList
+      tags:
+        - Lists
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateListRequest'
+      responses:
+        '200':
+          description: List updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete a list
+      operationId: deleteListById
+      tags:
+        - Lists
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: List deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /lists/{id}/restaurants:
+    parameters:
+      - $ref: '#/components/parameters/ListId'
+
+    get:
+      summary: Get restaurants in a list
+      description: Retrieve a paginated set of restaurants that belong to the list.
+      operationId: getRestaurantsInList
+      tags:
+        - Lists
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Page of restaurants in the list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestaurantPage'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add a restaurant to a list
+      operationId: addRestaurantToList
+      tags:
+        - Lists
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRestaurantToListRequest'
+      responses:
+        '204':
+          description: Restaurant added to list
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /lists/{id}/restaurants/{restaurantId}:
+    parameters:
+      - $ref: '#/components/parameters/ListId'
+      - name: restaurantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    delete:
+      summary: Remove a restaurant from a list
+      operationId: removeRestaurantFromList
+      tags:
+        - Lists
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Restaurant removed from list
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ---------------------------------------------------------------------------
+  # Users
+  # ---------------------------------------------------------------------------
+  # NOTE: Registration (POST /users) and account deletion (DELETE /users/me)
+  # are intentionally omitted. This is a single-user system — the account is
+  # bootstrapped at deployment time. Only profile retrieval is exposed.
+  /users/me:
+    get:
+      summary: Get the authenticated user
+      description: Returns the profile of the currently authenticated user.
+      operationId: getCurrentUser
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+# =============================================================================
+# Components
+# =============================================================================
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from `/auth/login`.
+
+  parameters:
+    RestaurantId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ListId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    PageNumber:
+      name: page
+      in: query
+      description: Zero-based page index
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+    PageSize:
+      name: size
+      in: query
+      description: Number of items per page
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    Sort:
+      name: sort
+      in: query
+      description: |
+        Sorting criteria in the format `property,(asc|desc)`. Multiple sort
+        parameters are supported, e.g. `?sort=name,asc&sort=createdAt,desc`.
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+
+  responses:
+    BadRequest:
+      description: The request payload or parameters are invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Authentication is required or the token is invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: The authenticated user is not allowed to perform this action
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Conflict:
+      description: The request conflicts with the current state (e.g. duplicate resource)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: An unexpected server-side error occurred
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # ----- Errors (RFC 9457 Problem Details) ---------------------------------
+    ErrorResponse:
+      type: object
+      description: |
+        RFC 9457 Problem Details response. The `type` URI should resolve to
+        human-readable documentation describing the problem type. The optional
+        `errors` extension carries field-level validation failures.
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: |
+            A URI reference that identifies the problem type. When dereferenced,
+            it SHOULD provide human-readable documentation for the problem.
+          example: https://api.example.com/problems/validation-error
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type.
+          example: Validation Error
+        status:
+          type: integer
+          description: The HTTP status code for this occurrence of the problem.
+          example: 400
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence.
+          example: "The field 'name' must not be blank."
+        instance:
+          type: string
+          format: uri
+          description: A URI reference identifying the specific occurrence of the problem.
+          example: /restaurants/3fa85f64-5717-4562-b3fc-2c963f66afa6
+        timestamp:
+          type: string
+          format: date-time
+          description: The date and time at which the problem occurred (extension field).
+          example: "2025-06-01T12:34:56Z"
+        errors:
+          type: array
+          description: Optional list of field-level validation errors (extension field).
+          items:
+            $ref: '#/components/schemas/FieldError'
+
+    FieldError:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          description: The name of the field that failed validation.
+          example: name
+        message:
+          type: string
+          description: A human-readable description of the validation failure.
+          example: must not be blank
+
+    # ----- Pagination -------------------------------------------------------
+    PageMetadata:
+      type: object
+      required:
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+
+    # ----- Auth -------------------------------------------------------------
+    LoginRequest:
+      type: object
+      required:
+        - usernameOrEmail
+        - password
+      properties:
+        usernameOrEmail:
+          type: string
+          minLength: 3
+          maxLength: 255
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          format: password
+
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: Signed JWT access token
+        tokenType:
+          type: string
+          enum: [Bearer]
+          default: Bearer
+        expiresIn:
+          type: integer
+          description: Token lifetime in seconds
+          example: 3600
+
+    # ----- Restaurants ------------------------------------------------------
+    RestaurantResponse:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: ['string', 'null']
+        street:
+          type: ['string', 'null']
+        city:
+          type: ['string', 'null']
+        postalCode:
+          type: ['string', 'null']
+        country:
+          type: ['string', 'null']
+        latitude:
+          type: ['number', 'null']
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: ['number', 'null']
+          format: double
+          minimum: -180
+          maximum: 180
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ['string', 'null']
+          format: date-time
+
+    RestaurantPage:
+      type: object
+      required:
+        - content
+        - page
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/RestaurantResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    AddRestaurantRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        street:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 255
+        postalCode:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    UpdateRestaurantRequest:
+      type: object
+      description: |
+        Partial restaurant update payload. Only fields included in the request
+        body are applied; omitted fields are left unchanged. At least one field
+        must be present.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        street:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 255
+        postalCode:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+
+    # ----- Lists ------------------------------------------------------------
+    RestaurantList:
+      type: object
+      required:
+        - id
+        - name
+        - ownerId
+        - restaurantCount
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: ['string', 'null']
+        ownerId:
+          type: string
+          format: uuid
+          description: UUID of the owning user. Always the single configured user in this deployment.
+        restaurantCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ['string', 'null']
+          format: date-time
+
+    RestaurantListPage:
+      type: object
+      required:
+        - content
+        - page
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/RestaurantList'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    CreateListRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+
+    UpdateListRequest:
+      type: object
+      description: |
+        Partial list update payload. Only fields included in the request body
+        are applied; omitted fields are left unchanged. At least one field
+        must be present.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+
+    AddRestaurantToListRequest:
+      type: object
+      required:
+        - restaurantId
+      properties:
+        restaurantId:
+          type: string
+          format: uuid
+
+    # ----- Users ------------------------------------------------------------
+    UserResponse:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
