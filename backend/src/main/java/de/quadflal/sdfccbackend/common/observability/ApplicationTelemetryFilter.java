@@ -1,4 +1,4 @@
-package de.quadflal.sdfccbackend.observability;
+package de.quadflal.sdfccbackend.common.observability;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
