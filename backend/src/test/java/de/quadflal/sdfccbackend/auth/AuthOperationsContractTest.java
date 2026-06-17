@@ -16,7 +16,7 @@ class AuthOperationsContractTest extends AbstractOpenApiContractTest {
                         .contentType(JSON)
                         .content("""
                                 {
-                                  "usernameOrEmail": "user@example.com",
+                                  "usernameOrEmail": "api-user@example.com",
                                   "password": "password123"
                                 }
                                 """))
