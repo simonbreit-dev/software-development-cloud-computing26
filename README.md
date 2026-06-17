@@ -3,8 +3,11 @@
 This is a student project for the course "Software Development for Cloud Computing" at the Media University of applied
 sciences in Stuttgart,Germany.
 
-### Goals of the course are:
+## 1.) Create a ready to use Observability stack with OpenTelemetry, Prometheus and Grafana
 
+### Goals for this step are:
+
+## 2.) Building a demo REST API backend
 
 ### Goals for the software project are:
 
