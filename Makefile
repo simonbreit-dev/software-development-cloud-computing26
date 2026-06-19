@@ -69,7 +69,7 @@ check-generated: generate
 	@echo ">>> Diffing generated files against committed state..."
 	@if ! git diff --quiet -- $(GENERATED_DIR); then \
 		echo ""; \
-		echo "❌  Generated files are out of sync with $(SPEC_FILE)"; \
+		echo "  Generated files are out of sync with $(SPEC_FILE)"; \
 		echo ""; \
 		echo "    Either the spec was changed without regenerating,"; \
 		echo "    or generated files were edited manually."; \
@@ -80,4 +80,4 @@ check-generated: generate
 		echo ""; \
 		exit 1; \
 	fi
-	@echo "✅  Generated files are in sync with the spec."
+	@echo "  Generated files are in sync with the spec."
