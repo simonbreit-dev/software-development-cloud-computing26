@@ -1,5 +1,6 @@
 package de.quadflal.sdfccbackend.core;
 
+import de.quadflal.sdfccbackend.core.exception.InvalidCredentialsException;
 import de.quadflal.sdfccbackend.core.model.LoginCommand;
 import de.quadflal.sdfccbackend.core.model.LoginResult;
 import de.quadflal.sdfccbackend.core.model.User;
@@ -37,14 +38,12 @@ public class AuthService implements AuthPort {
         Optional<User> userOpt = authPersistencePort.findByUsernameOrEmail(command.usernameOrEmail());
 
         if (userOpt.isEmpty()) {
-            // TODO: add correct exception handling
-            throw new RuntimeException("User not found");
+            throw new InvalidCredentialsException();
         }
 
         User user = userOpt.get();
         if (!passwordEncoder.matches(command.password(), user.passwordHash())) {
-            // TODO: add correct exception handling
-            throw new RuntimeException("Invalid password");
+            throw new InvalidCredentialsException();
         }
 
         Instant instantNow = Instant.now();
