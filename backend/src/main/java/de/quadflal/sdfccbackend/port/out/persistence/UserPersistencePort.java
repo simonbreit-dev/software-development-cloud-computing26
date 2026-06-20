@@ -10,5 +10,7 @@ public interface UserPersistencePort {
 
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByUsernameOrEmail(String usernameOrEmail);
+
     User save(User user);
 }
