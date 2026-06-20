@@ -55,7 +55,7 @@ public class AuthService implements AuthPort {
         String scope = "USER";
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer(environment.getProperty("jwt.issuer", "sdfcc-backend"))
+                .issuer(environment.getProperty("jwt.issuer"))
                 .issuedAt(instantNow)
                 .expiresAt(expiresAt)
                 .subject(user.username())
