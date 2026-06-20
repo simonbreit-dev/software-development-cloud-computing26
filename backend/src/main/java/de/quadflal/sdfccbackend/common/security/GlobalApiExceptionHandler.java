@@ -2,6 +2,10 @@ package de.quadflal.sdfccbackend.common.security;
 
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.ErrorResponse;
 import de.quadflal.sdfccbackend.core.exception.InvalidCredentialsException;
+import de.quadflal.sdfccbackend.core.exception.ListNotFoundException;
+import de.quadflal.sdfccbackend.core.exception.RestaurantAlreadyInListException;
+import de.quadflal.sdfccbackend.core.exception.RestaurantNotFoundException;
+import de.quadflal.sdfccbackend.core.exception.UserNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -49,6 +53,26 @@ public class GlobalApiExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(HttpServletRequest request) {
         return buildProblem(request, HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials");
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(HttpServletRequest request) {
+        return buildProblem(request, HttpStatus.NOT_FOUND, "Not Found", "User not found");
+    }
+
+    @ExceptionHandler(RestaurantNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRestaurantNotFound(HttpServletRequest request) {
+        return buildProblem(request, HttpStatus.NOT_FOUND, "Not Found", "Restaurant not found");
+    }
+
+    @ExceptionHandler(ListNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleListNotFound(HttpServletRequest request) {
+        return buildProblem(request, HttpStatus.NOT_FOUND, "Not Found", "List not found");
+    }
+
+    @ExceptionHandler(RestaurantAlreadyInListException.class)
+    public ResponseEntity<ErrorResponse> handleRestaurantAlreadyInList(HttpServletRequest request) {
+        return buildProblem(request, HttpStatus.CONFLICT, "Conflict", "Restaurant already in list");
     }
 
     @ExceptionHandler(ResponseStatusException.class)
