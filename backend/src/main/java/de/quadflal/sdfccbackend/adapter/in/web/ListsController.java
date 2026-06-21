@@ -28,9 +28,11 @@ import java.util.UUID;
 public class ListsController implements ListsApi {
 
     private final ListsPort listsPort;
+    private final RestaurantMapper restaurantMapper;
 
-    public ListsController(ListsPort listsPort) {
+    public ListsController(ListsPort listsPort, RestaurantMapper restaurantMapper) {
         this.listsPort = listsPort;
+        this.restaurantMapper = restaurantMapper;
     }
 
     @Override
@@ -71,7 +73,7 @@ public class ListsController implements ListsApi {
     public ResponseEntity<RestaurantPage> getRestaurantsInList(UUID id, Integer page, Integer size) {
         PageRequest pageRequest = new PageRequest(page, size, List.of());
         Page<de.quadflal.sdfccbackend.core.model.Restaurant> restaurants = listsPort.getRestaurantsInList(id, pageRequest);
-        List<RestaurantResponse> content = restaurants.content().stream().map(this::toResponse).toList();
+        List<RestaurantResponse> content = restaurants.content().stream().map(restaurantMapper::toResponse).toList();
         PageMetadata metadata = new PageMetadata(restaurants.page(), restaurants.size(), restaurants.totalElements(), restaurants.totalPages());
         return ResponseEntity.ok(new RestaurantPage(content, metadata));
     }
@@ -115,19 +117,6 @@ public class ListsController implements ListsApi {
         );
         response.setDescription(list.description());
         response.setUpdatedAt(list.updatedAt());
-        return response;
-    }
-
-    private RestaurantResponse toResponse(de.quadflal.sdfccbackend.core.model.Restaurant restaurant) {
-        RestaurantResponse response = new RestaurantResponse(restaurant.id(), restaurant.name(), restaurant.createdAt());
-        response.setDescription(restaurant.description());
-        response.setStreet(restaurant.street());
-        response.setCity(restaurant.city());
-        response.setPostalCode(restaurant.postalCode());
-        response.setCountry(restaurant.country());
-        response.setLatitude(restaurant.latitude());
-        response.setLongitude(restaurant.longitude());
-        response.setUpdatedAt(restaurant.updatedAt());
         return response;
     }
 }

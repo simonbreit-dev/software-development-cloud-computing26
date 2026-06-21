@@ -24,9 +24,11 @@ import java.util.UUID;
 public class RestaurantController implements RestaurantsApi {
 
     private final RestaurantPort restaurantPort;
+    private final RestaurantMapper restaurantMapper;
 
-    public RestaurantController(RestaurantPort restaurantPort) {
+    public RestaurantController(RestaurantPort restaurantPort, RestaurantMapper restaurantMapper) {
         this.restaurantPort = restaurantPort;
+        this.restaurantMapper = restaurantMapper;
     }
 
     @Override
@@ -44,7 +46,7 @@ public class RestaurantController implements RestaurantsApi {
                 OffsetDateTime.now(),
                 null
         ));
-        RestaurantResponse response = toResponse(created);
+        RestaurantResponse response = restaurantMapper.toResponse(created);
         return ResponseEntity.created(URI.create("/restaurants/" + response.getId())).body(response);
     }
 
@@ -56,7 +58,7 @@ public class RestaurantController implements RestaurantsApi {
 
     @Override
     public ResponseEntity<RestaurantResponse> getRestaurantById(UUID id) {
-        return ResponseEntity.ok(toResponse(restaurantPort.getRestaurantById(id)));
+        return ResponseEntity.ok(restaurantMapper.toResponse(restaurantPort.getRestaurantById(id)));
     }
 
     @Override
@@ -64,7 +66,7 @@ public class RestaurantController implements RestaurantsApi {
         PageRequest pageRequest = new PageRequest(page, size, sort == null ? List.of() : sort);
         RestaurantFilter filter = new RestaurantFilter(search, city, country);
         Page<Restaurant> restaurants = restaurantPort.listRestaurants(pageRequest, filter);
-        List<RestaurantResponse> content = restaurants.content().stream().map(this::toResponse).toList();
+        List<RestaurantResponse> content = restaurants.content().stream().map(restaurantMapper::toResponse).toList();
         PageMetadata metadata = new PageMetadata(restaurants.page(), restaurants.size(), restaurants.totalElements(), restaurants.totalPages());
         return ResponseEntity.ok(new RestaurantPage(content, metadata));
     }
@@ -84,19 +86,7 @@ public class RestaurantController implements RestaurantsApi {
                 null,
                 null
         );
-        return ResponseEntity.ok(toResponse(restaurantPort.updateRestaurant(id, patch)));
+        return ResponseEntity.ok(restaurantMapper.toResponse(restaurantPort.updateRestaurant(id, patch)));
     }
 
-    private RestaurantResponse toResponse(Restaurant restaurant) {
-        RestaurantResponse response = new RestaurantResponse(restaurant.id(), restaurant.name(), restaurant.createdAt());
-        response.setDescription(restaurant.description());
-        response.setStreet(restaurant.street());
-        response.setCity(restaurant.city());
-        response.setPostalCode(restaurant.postalCode());
-        response.setCountry(restaurant.country());
-        response.setLatitude(restaurant.latitude());
-        response.setLongitude(restaurant.longitude());
-        response.setUpdatedAt(restaurant.updatedAt());
-        return response;
-    }
 }
