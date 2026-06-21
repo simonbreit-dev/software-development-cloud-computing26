@@ -17,7 +17,7 @@ info:
 servers:
   - url: https://api.example.com/v1
     description: Production server
-  - url: http://localhost:8080/v1
+  - url: http://localhost:8080/
     description: Local development server
 
 tags:
@@ -511,7 +511,6 @@ components:
         parameters are supported, e.g. `?sort=name,asc&sort=createdAt,desc`.
       required: false
       style: form
-      explode: true
       schema:
         type: array
         items:
