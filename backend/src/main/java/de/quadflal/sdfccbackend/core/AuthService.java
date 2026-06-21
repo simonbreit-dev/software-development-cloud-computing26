@@ -8,6 +8,8 @@ import de.quadflal.sdfccbackend.port.in.web.AuthPort;
 import de.quadflal.sdfccbackend.port.out.persistence.AuthPersistencePort;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -61,7 +63,9 @@ public class AuthService implements AuthPort {
                 .claim("scope", scope)
                 .build();
 
-        String tokenValue = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS384).build();
+        JwtEncoderParameters parameters = JwtEncoderParameters.from(jwsHeader, claims);
+        String tokenValue = jwtEncoder.encode(parameters).getTokenValue();
         int timeToLive = Math.toIntExact(ttl.getSeconds());
         return new LoginResult(tokenValue, timeToLive);
     }

@@ -1,7 +1,9 @@
 package de.quadflal.sdfccbackend.common.security;
 
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
-import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.OctetSequenceKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,22 +29,25 @@ public class JwtSignerConfiguration {
             throw new IllegalStateException("Invalid JWT signing key: expected Base64", exception);
         }
 
-        if (key.length < 32) {
-            throw new IllegalStateException("Invalid JWT signing key: expected at least 256 bits");
+        if (key.length < 48) {
+            throw new IllegalStateException("Invalid JWT signing key: expected at least 384 bits");
         }
 
-        return new SecretKeySpec(key, "HmacSHA256");
+        return new SecretKeySpec(key, "HmacSHA384");
     }
 
     @Bean
     public JwtEncoder jwtEncoder(SecretKey jwtSigningKey) {
-        return new NimbusJwtEncoder(new ImmutableSecret<SecurityContext>(jwtSigningKey));
+        OctetSequenceKey jwk = new OctetSequenceKey.Builder(jwtSigningKey)
+                .algorithm(JWSAlgorithm.HS384)
+                .build();
+        return new NimbusJwtEncoder(new ImmutableJWKSet<>(new JWKSet(jwk)));
     }
 
     @Bean
     public JwtDecoder jwtDecoder(SecretKey jwtSigningKey) {
         return NimbusJwtDecoder.withSecretKey(jwtSigningKey)
-                .macAlgorithm(MacAlgorithm.HS256)
+                .macAlgorithm(MacAlgorithm.HS384)
                 .build();
     }
 }
