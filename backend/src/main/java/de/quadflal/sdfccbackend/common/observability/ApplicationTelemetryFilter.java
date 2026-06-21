@@ -10,6 +10,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerMapping;
@@ -29,7 +30,7 @@ public class ApplicationTelemetryFilter extends OncePerRequestFilter {
     private final LongCounter errorCounter;
     private final DoubleHistogram requestDuration;
 
-    public ApplicationTelemetryFilter(OpenTelemetry openTelemetry) {
+    public ApplicationTelemetryFilter(@Qualifier("openTelemetry") OpenTelemetry openTelemetry) {
         var meter = openTelemetry.getMeter("de.quadflal.sdfccbackend");
         this.requestCounter = meter.counterBuilder("sdfcc.http.server.requests")
                 .setDescription("Number of HTTP requests handled by the SDFCC backend")
