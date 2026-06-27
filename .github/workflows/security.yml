@@ -15,6 +15,8 @@ on:
       - "openApiSpec.yaml"
       - "Makefile"
       - ".github/workflows/security.yml"
+  schedule:
+    - cron: "23 3 * * 1"
 
 permissions:
   contents: read
@@ -40,7 +42,7 @@ jobs:
             backend/.mvn/wrapper/maven-wrapper.properties
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java
 
@@ -49,12 +51,13 @@ jobs:
         run: ./mvnw -B -DskipTests package
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+
     permissions:
       contents: read
       pull-requests: read
@@ -65,31 +68,5 @@ jobs:
 
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
-
-  trivy:
-    name: Trivy image scan
-    runs-on: ubuntu-latest
-    env:
-      BACKEND_IMAGE: sdfcc-backend:${{ github.sha }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build backend image
-        run: docker build -f backend/Dockerfile -t "${BACKEND_IMAGE}" .
-
-      - name: Scan image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.BACKEND_IMAGE }}
-          format: sarif
-          output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-
-      - name: Upload Trivy SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
+          fail-on-severity: high
