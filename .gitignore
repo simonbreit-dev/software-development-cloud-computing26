@@ -166,3 +166,6 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/java,jetbrains+all,visualstudiocode,angular
 
 .env
+
+/tmp
+.run/
