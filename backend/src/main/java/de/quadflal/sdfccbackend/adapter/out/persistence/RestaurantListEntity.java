@@ -1,11 +1,15 @@
 package de.quadflal.sdfccbackend.adapter.out.persistence;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -33,6 +37,9 @@ public class RestaurantListEntity {
 
     @Column
     private OffsetDateTime updatedAt;
+
+    @OneToMany(mappedBy = "restaurantList", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RestaurantListRestaurantEntity> restaurantAssociations = new HashSet<>();
 
     public RestaurantListEntity() {
     }
@@ -68,4 +75,7 @@ public class RestaurantListEntity {
 
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public Set<RestaurantListRestaurantEntity> getRestaurantAssociations() { return restaurantAssociations; }
+    public void setRestaurantAssociations(Set<RestaurantListRestaurantEntity> restaurantAssociations) { this.restaurantAssociations = restaurantAssociations; }
 }
