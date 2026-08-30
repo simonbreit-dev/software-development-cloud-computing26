@@ -4,6 +4,8 @@ import de.quadflal.sdfccbackend.AbstractOpenApiContractTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,7 +39,7 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
     @DisplayName("POST /lists returns 201 for authenticated user")
     void createListReturns201WhenAuthenticated() throws Exception {
         mockMvc.perform(post("/lists")
-                        .with(user("api-user").roles("USER"))
+                        .with(user("demo-user").roles("USER"))
                         .contentType(JSON)
                         .content("""
                                 {
@@ -53,6 +55,13 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
     void getListByIdReturns200() throws Exception {
         mockMvc.perform(get("/lists/{id}", RESOURCE_ID))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /lists/{id} returns 404 for unknown list")
+    void getListByIdReturns404ForUnknownId() throws Exception {
+        mockMvc.perform(get("/lists/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -83,6 +92,20 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
     }
 
     @Test
+    @DisplayName("PATCH /lists/{id} returns 404 for unknown list")
+    void updateListReturns404ForUnknownId() throws Exception {
+        mockMvc.perform(patch("/lists/{id}", UUID.randomUUID())
+                        .with(user("api-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "name": "Updated List"
+                                }
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("DELETE /lists/{id} requires authentication")
     void deleteListReturns401WithoutAuthentication() throws Exception {
         mockMvc.perform(delete("/lists/{id}", RESOURCE_ID))
@@ -92,9 +115,30 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
     @Test
     @DisplayName("DELETE /lists/{id} returns 204 for authenticated user")
     void deleteListReturns204WhenAuthenticated() throws Exception {
-        mockMvc.perform(delete("/lists/{id}", RESOURCE_ID)
+        // Use a dedicated list for deletion so the shared RESOURCE_ID fixture stays intact for other tests.
+        String response = mockMvc.perform(post("/lists")
+                        .with(user("demo-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "name": "List to delete"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String id = com.jayway.jsonpath.JsonPath.read(response, "$.id");
+
+        mockMvc.perform(delete("/lists/{id}", id)
                         .with(user("api-user").roles("USER")))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("DELETE /lists/{id} returns 404 for unknown list")
+    void deleteListReturns404ForUnknownId() throws Exception {
+        mockMvc.perform(delete("/lists/{id}", UUID.randomUUID())
+                        .with(user("api-user").roles("USER")))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -132,6 +176,20 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
     }
 
     @Test
+    @DisplayName("POST /lists/{id}/restaurants returns 404 for unknown list")
+    void addRestaurantToListReturns404ForUnknownListId() throws Exception {
+        mockMvc.perform(post("/lists/{id}/restaurants", UUID.randomUUID())
+                        .with(user("api-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "restaurantId": "%s"
+                                }
+                                """.formatted(RESTAURANT_ID)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("DELETE /lists/{id}/restaurants/{restaurantId} requires authentication")
     void removeRestaurantFromListReturns401WithoutAuthentication() throws Exception {
         mockMvc.perform(delete("/lists/{id}/restaurants/{restaurantId}", RESOURCE_ID, RESTAURANT_ID))
@@ -144,5 +202,13 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
         mockMvc.perform(delete("/lists/{id}/restaurants/{restaurantId}", RESOURCE_ID, RESTAURANT_ID)
                         .with(user("api-user").roles("USER")))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("DELETE /lists/{id}/restaurants/{restaurantId} returns 404 for unknown list")
+    void removeRestaurantFromListReturns404ForUnknownListId() throws Exception {
+        mockMvc.perform(delete("/lists/{id}/restaurants/{restaurantId}", UUID.randomUUID(), RESTAURANT_ID)
+                        .with(user("api-user").roles("USER")))
+                .andExpect(status().isNotFound());
     }
 }
