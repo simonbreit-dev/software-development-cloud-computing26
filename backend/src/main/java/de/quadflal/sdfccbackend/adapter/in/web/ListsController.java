@@ -10,9 +10,11 @@ import de.quadflal.sdfccbackend.adapter.in.web.generated.model.UpdateListRequest
 import de.quadflal.sdfccbackend.core.model.Page;
 import de.quadflal.sdfccbackend.core.model.Restaurant;
 import de.quadflal.sdfccbackend.port.in.web.ListsPort;
+import de.quadflal.sdfccbackend.port.in.web.UserPort;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.OffsetDateTime;
@@ -23,24 +25,34 @@ import java.util.UUID;
 public class ListsController implements ListsApi {
 
     private final ListsPort listsPort;
+    private final UserPort userPort;
 
-    ListsController(ListsPort listsPort) {
+    ListsController(ListsPort listsPort, UserPort userPort) {
         this.listsPort = listsPort;
+        this.userPort = userPort;
     }
 
     @Override
     public ResponseEntity<Void> addRestaurantToList(UUID id, AddRestaurantToListRequest addRestaurantToListRequest) {
-        listsPort.addRestaurantToList(id, addRestaurantToListRequest.getRestaurantId());
+        boolean added = listsPort.addRestaurantToList(id, addRestaurantToListRequest.getRestaurantId());
+        if (!added) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<de.quadflal.sdfccbackend.adapter.in.web.generated.model.RestaurantList> createList(CreateListRequest createListRequest) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID ownerId = userPort.findByUsername(username)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR))
+                .id();
+
         de.quadflal.sdfccbackend.core.model.RestaurantList domainList = new de.quadflal.sdfccbackend.core.model.RestaurantList(
                 UUID.randomUUID(),
                 createListRequest.getName(),
                 createListRequest.getDescription(),
-                UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                ownerId,
                 0,
                 OffsetDateTime.now(),
                 null
@@ -51,6 +63,9 @@ public class ListsController implements ListsApi {
 
     @Override
     public ResponseEntity<Void> deleteListById(UUID id) {
+        if (listsPort.findById(id).isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         listsPort.deleteById(id);
         return ResponseEntity.noContent().build();
     }
@@ -58,15 +73,7 @@ public class ListsController implements ListsApi {
     @Override
     public ResponseEntity<de.quadflal.sdfccbackend.adapter.in.web.generated.model.RestaurantList> getListById(UUID id) {
         de.quadflal.sdfccbackend.core.model.RestaurantList list = listsPort.findById(id)
-                .orElseGet(() -> new de.quadflal.sdfccbackend.core.model.RestaurantList(
-                        id,
-                        "Sample List",
-                        "",
-                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
-                        0,
-                        OffsetDateTime.now(),
-                        null
-                ));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
         return ResponseEntity.ok(convert(list));
     }
 
@@ -81,7 +88,7 @@ public class ListsController implements ListsApi {
 
     @Override
     public ResponseEntity<RestaurantListPage> listLists(Integer page, Integer size, @Nullable List<String> sort) {
-        Page<de.quadflal.sdfccbackend.core.model.RestaurantList> result = listsPort.findAll(page != null ? page : 0, size != null ? size : 20);
+        Page<de.quadflal.sdfccbackend.core.model.RestaurantList> result = listsPort.findAll(page != null ? page : 0, size != null ? size : 20, sort);
         RestaurantListPage pageResponse = new RestaurantListPage();
         pageResponse.setContent(result.content().stream().map(this::convert).toList());
         pageResponse.setPage(new PageMetadata(result.page(), result.size(), result.totalElements(), result.totalPages()));
@@ -90,22 +97,17 @@ public class ListsController implements ListsApi {
 
     @Override
     public ResponseEntity<Void> removeRestaurantFromList(UUID id, UUID restaurantId) {
-        listsPort.removeRestaurantFromList(id, restaurantId);
+        boolean removed = listsPort.removeRestaurantFromList(id, restaurantId);
+        if (!removed) {
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<de.quadflal.sdfccbackend.adapter.in.web.generated.model.RestaurantList> updateList(UUID id, UpdateListRequest updateListRequest) {
         de.quadflal.sdfccbackend.core.model.RestaurantList current = listsPort.findById(id)
-                .orElseGet(() -> new de.quadflal.sdfccbackend.core.model.RestaurantList(
-                        id,
-                        updateListRequest.getName() != null ? updateListRequest.getName() : "Updated List",
-                        updateListRequest.getDescription() != null ? updateListRequest.getDescription() : "",
-                        UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
-                        0,
-                        OffsetDateTime.now(),
-                        OffsetDateTime.now()
-                ));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
 
         de.quadflal.sdfccbackend.core.model.RestaurantList updated = new de.quadflal.sdfccbackend.core.model.RestaurantList(
                 current.id(),
@@ -117,9 +119,7 @@ public class ListsController implements ListsApi {
                 OffsetDateTime.now()
         );
 
-        de.quadflal.sdfccbackend.core.model.RestaurantList persisted = listsPort.findById(id)
-                .map(existing -> listsPort.update(id, updated))
-                .orElse(updated);
+        de.quadflal.sdfccbackend.core.model.RestaurantList persisted = listsPort.update(id, updated);
 
         return ResponseEntity.ok(convert(persisted));
     }

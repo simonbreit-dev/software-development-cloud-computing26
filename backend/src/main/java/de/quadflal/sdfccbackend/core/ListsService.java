@@ -20,8 +20,8 @@ public class ListsService implements ListsPort {
     }
 
     @Override
-    public Page<RestaurantList> findAll(int page, int size) {
-        return listPersistencePort.findAll(new de.quadflal.sdfccbackend.core.model.PageRequest(page, size, java.util.List.of()));
+    public Page<RestaurantList> findAll(int page, int size, java.util.List<String> sort) {
+        return listPersistencePort.findAll(new de.quadflal.sdfccbackend.core.model.PageRequest(page, size, sort != null ? sort : java.util.List.of()));
     }
 
     @Override
@@ -63,12 +63,12 @@ public class ListsService implements ListsPort {
     }
 
     @Override
-    public void addRestaurantToList(UUID listId, UUID restaurantId) {
-        listPersistencePort.addRestaurantToList(listId, restaurantId);
+    public boolean addRestaurantToList(UUID listId, UUID restaurantId) {
+        return listPersistencePort.addRestaurantToList(listId, restaurantId);
     }
 
     @Override
-    public void removeRestaurantFromList(UUID listId, UUID restaurantId) {
-        listPersistencePort.removeRestaurantFromList(listId, restaurantId);
+    public boolean removeRestaurantFromList(UUID listId, UUID restaurantId) {
+        return listPersistencePort.removeRestaurantFromList(listId, restaurantId);
     }
 }

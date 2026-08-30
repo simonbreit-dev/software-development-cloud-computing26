@@ -5,15 +5,21 @@ import de.quadflal.sdfccbackend.core.model.PageRequest;
 import de.quadflal.sdfccbackend.core.model.Restaurant;
 import de.quadflal.sdfccbackend.core.model.RestaurantList;
 import de.quadflal.sdfccbackend.port.out.persistence.ListPersistencePort;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
 public class ListPersistenceAdapter implements ListPersistencePort {
+
+    private static final Set<String> SORTABLE_PROPERTIES = Set.of(
+            "name", "description", "restaurantCount", "createdAt", "updatedAt"
+    );
 
     private final RestaurantListRepository restaurantListRepository;
     private final RestaurantListRestaurantRepository restaurantListRestaurantRepository;
@@ -29,16 +35,31 @@ public class ListPersistenceAdapter implements ListPersistencePort {
 
     @Override
     public Page<RestaurantList> findAll(PageRequest pageRequest) {
-        List<RestaurantList> content = restaurantListRepository.findAll().stream()
-                .skip((long) pageRequest.page() * pageRequest.size())
-                .limit(pageRequest.size())
+        var pageable = org.springframework.data.domain.PageRequest.of(
+                pageRequest.page(), pageRequest.size(), toSort(pageRequest.sort()));
+        var result = restaurantListRepository.findAll(pageable);
+
+        List<RestaurantList> content = result.getContent().stream()
                 .map(this::toDomain)
                 .toList();
 
-        long total = restaurantListRepository.count();
-        int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / pageRequest.size());
+        return new Page<>(content, pageRequest.page(), pageRequest.size(), result.getTotalElements(), result.getTotalPages());
+    }
 
-        return new Page<>(content, pageRequest.page(), pageRequest.size(), total, totalPages);
+    private Sort toSort(List<String> sortCriteria) {
+        if (sortCriteria == null || sortCriteria.isEmpty()) {
+            return Sort.unsorted();
+        }
+
+        List<Sort.Order> orders = sortCriteria.stream()
+                .map(criterion -> criterion.split(",", 2))
+                .filter(parts -> parts.length > 0 && SORTABLE_PROPERTIES.contains(parts[0]))
+                .map(parts -> parts.length > 1 && "desc".equalsIgnoreCase(parts[1])
+                        ? Sort.Order.desc(parts[0])
+                        : Sort.Order.asc(parts[0]))
+                .toList();
+
+        return orders.isEmpty() ? Sort.unsorted() : Sort.by(orders);
     }
 
     @Override
@@ -84,19 +105,19 @@ public class ListPersistenceAdapter implements ListPersistencePort {
     }
 
     @Override
-    public void addRestaurantToList(UUID listId, UUID restaurantId) {
+    public boolean addRestaurantToList(UUID listId, UUID restaurantId) {
         RestaurantListEntity list = restaurantListRepository.findById(listId).orElse(null);
         if (list == null) {
-            return;
+            return false;
         }
 
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId).orElse(null);
         if (restaurant == null) {
-            return;
+            return false;
         }
 
         if (restaurantListRestaurantRepository.existsByRestaurantListIdAndRestaurantId(listId, restaurantId)) {
-            return;
+            return true;
         }
 
         RestaurantListRestaurantEntity row = new RestaurantListRestaurantEntity(
@@ -110,23 +131,32 @@ public class ListPersistenceAdapter implements ListPersistencePort {
         list.setRestaurantCount((int) restaurantListRestaurantRepository.countByRestaurantListId(listId));
         list.setUpdatedAt(OffsetDateTime.now());
         restaurantListRepository.save(list);
+        return true;
     }
 
     @Override
-    public void removeRestaurantFromList(UUID listId, UUID restaurantId) {
+    public boolean removeRestaurantFromList(UUID listId, UUID restaurantId) {
+        RestaurantListEntity list = restaurantListRepository.findById(listId).orElse(null);
+        if (list == null) {
+            return false;
+        }
+
+        if (!restaurantRepository.existsById(restaurantId)) {
+            return false;
+        }
+
         RestaurantListRestaurantEntity row = restaurantListRestaurantRepository.findByRestaurantListIdAndRestaurantId(listId, restaurantId)
                 .orElse(null);
         if (row == null) {
-            return;
+            return true;
         }
 
         restaurantListRestaurantRepository.delete(row);
 
-        RestaurantListEntity list = restaurantListRepository.findById(listId)
-                .orElseThrow(() -> new IllegalArgumentException("List not found: " + listId));
         list.setRestaurantCount((int) restaurantListRestaurantRepository.countByRestaurantListId(listId));
         list.setUpdatedAt(OffsetDateTime.now());
         restaurantListRepository.save(list);
+        return true;
     }
 
     @Override

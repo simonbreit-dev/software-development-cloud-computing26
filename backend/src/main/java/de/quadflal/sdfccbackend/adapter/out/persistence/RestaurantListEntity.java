@@ -23,7 +23,7 @@ public class RestaurantListEntity {
     @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(length = 1000)
+    @Column(length = 2000)
     private String description;
 
     @Column(nullable = false)

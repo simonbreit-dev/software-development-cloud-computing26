@@ -8,12 +8,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ListsPort {
-    Page<RestaurantList> findAll(int page, int size);
+    Page<RestaurantList> findAll(int page, int size, java.util.List<String> sort);
     Optional<RestaurantList> findById(UUID id);
     RestaurantList create(RestaurantList restaurantList);
     RestaurantList update(UUID id, RestaurantList restaurantList);
     void deleteById(UUID id);
     Page<Restaurant> findRestaurantsByListId(UUID listId, int page, int size);
-    void addRestaurantToList(UUID listId, UUID restaurantId);
-    void removeRestaurantFromList(UUID listId, UUID restaurantId);
+    boolean addRestaurantToList(UUID listId, UUID restaurantId);
+    boolean removeRestaurantFromList(UUID listId, UUID restaurantId);
 }

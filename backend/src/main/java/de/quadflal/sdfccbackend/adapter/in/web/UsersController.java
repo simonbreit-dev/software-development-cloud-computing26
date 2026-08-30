@@ -2,12 +2,12 @@ package de.quadflal.sdfccbackend.adapter.in.web;
 
 import de.quadflal.sdfccbackend.adapter.in.web.generated.api.UsersApi;
 import de.quadflal.sdfccbackend.adapter.in.web.generated.model.UserResponse;
+import de.quadflal.sdfccbackend.core.model.User;
 import de.quadflal.sdfccbackend.port.in.web.UserPort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @RestController
 public class UsersController implements UsersApi {
@@ -20,11 +20,15 @@ public class UsersController implements UsersApi {
 
     @Override
     public ResponseEntity<UserResponse> getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userPort.findByUsername(username)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND));
+
         UserResponse response = new UserResponse();
-        response.setId(UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6"));
-        response.setUsername("api-user");
-        response.setEmail("api-user@example.com");
-        response.setCreatedAt(OffsetDateTime.now());
+        response.setId(user.id());
+        response.setUsername(user.username());
+        response.setEmail(user.email());
+        response.setCreatedAt(user.createdAt());
         return ResponseEntity.ok(response);
     }
 }

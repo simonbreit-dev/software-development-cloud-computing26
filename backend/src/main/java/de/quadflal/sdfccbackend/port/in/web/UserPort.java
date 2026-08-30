@@ -8,5 +8,6 @@ import java.util.UUID;
 public interface UserPort {
     Optional<User> findById(UUID id);
     Optional<User> findByEmail(String email);
+    Optional<User> findByUsername(String username);
     User create(User user);
 }

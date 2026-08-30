@@ -21,9 +21,9 @@ public interface ListPersistencePort {
 
     Page<Restaurant> findRestaurantsByListId(UUID listId, PageRequest pageRequest);
 
-    void addRestaurantToList(UUID listId, UUID restaurantId);
+    boolean addRestaurantToList(UUID listId, UUID restaurantId);
 
-    void removeRestaurantFromList(UUID listId, UUID restaurantId);
+    boolean removeRestaurantFromList(UUID listId, UUID restaurantId);
 
     boolean restaurantExistsInList(UUID listId, UUID restaurantId);
 }

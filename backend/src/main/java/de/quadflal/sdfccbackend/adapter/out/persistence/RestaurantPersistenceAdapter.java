@@ -23,14 +23,17 @@ public class RestaurantPersistenceAdapter implements RestaurantPersistencePort {
 
     @Override
     public Page<Restaurant> findAll(PageRequest pageRequest, RestaurantFilter filter) {
-        List<Restaurant> content = restaurantRepository.findAll().stream()
+        List<RestaurantEntity> matching = restaurantRepository.findAll().stream()
                 .filter(entity -> filter == null || matchesFilter(entity, filter))
+                .toList();
+
+        List<Restaurant> content = matching.stream()
                 .skip((long) pageRequest.page() * pageRequest.size())
                 .limit(pageRequest.size())
                 .map(this::toDomain)
                 .toList();
 
-        long total = restaurantRepository.count();
+        long total = matching.size();
         int totalPages = (int) Math.ceil((double) total / pageRequest.size());
 
         return new Page<>(content, pageRequest.page(), pageRequest.size(), total, totalPages);

@@ -28,6 +28,11 @@ public class UserPersistenceAdapter implements UserPersistencePort {
     }
 
     @Override
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username).map(this::toDomain);
+    }
+
+    @Override
     public User save(User user) {
         UserEntity entity = userRepository.findById(user.id())
                 .orElse(new UserEntity());

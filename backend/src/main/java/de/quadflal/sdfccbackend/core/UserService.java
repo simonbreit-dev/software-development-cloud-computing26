@@ -28,6 +28,11 @@ public class UserService implements UserPort {
     }
 
     @Override
+    public Optional<User> findByUsername(String username) {
+        return userPersistencePort.findByUsername(username);
+    }
+
+    @Override
     public User create(User user) {
         return userPersistencePort.save(user);
     }
