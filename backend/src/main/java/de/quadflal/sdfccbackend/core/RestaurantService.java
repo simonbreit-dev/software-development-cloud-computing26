@@ -20,8 +20,8 @@ public class RestaurantService implements RestaurantPort {
     }
 
     @Override
-    public Page<Restaurant> findAll(int page, int size, RestaurantFilter filter) {
-        return restaurantPersistencePort.findAll(new de.quadflal.sdfccbackend.core.model.PageRequest(page, size, java.util.List.of()), filter);
+    public Page<Restaurant> findAll(int page, int size, RestaurantFilter filter, java.util.List<String> sort) {
+        return restaurantPersistencePort.findAll(new de.quadflal.sdfccbackend.core.model.PageRequest(page, size, sort != null ? sort : java.util.List.of()), filter);
     }
 
     @Override

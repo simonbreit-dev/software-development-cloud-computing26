@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class ListOperationsContractTest extends AbstractOpenApiContractTest {
@@ -20,6 +21,37 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
     void listListsReturns200() throws Exception {
         mockMvc.perform(get("/lists"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /lists respects the sort query parameter")
+    void listListsRespectsSortParameter() throws Exception {
+        mockMvc.perform(post("/lists")
+                        .with(user("demo-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "name": "ZZZ-ListSortFixture"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/lists")
+                        .with(user("demo-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "name": "AAA-ListSortFixture"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/lists").queryParam("size", "100").queryParam("sort", "name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("AAA-ListSortFixture"));
+
+        mockMvc.perform(get("/lists").queryParam("size", "100").queryParam("sort", "name,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("ZZZ-ListSortFixture"));
     }
 
     @Test
@@ -187,6 +219,41 @@ class ListOperationsContractTest extends AbstractOpenApiContractTest {
                                 }
                                 """.formatted(RESTAURANT_ID)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("POST /lists/{id}/restaurants returns 409 for a restaurant already in the list")
+    void addRestaurantToListReturns409ForDuplicate() throws Exception {
+        // Use dedicated list/restaurant fixtures so this doesn't depend on other tests' shared state.
+        String listResponse = mockMvc.perform(post("/lists")
+                        .with(user("demo-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "name": "Duplicate Test List"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String listId = com.jayway.jsonpath.JsonPath.read(listResponse, "$.id");
+
+        String restaurantBody = """
+                {
+                  "restaurantId": "%s"
+                }
+                """.formatted(RESTAURANT_ID);
+
+        mockMvc.perform(post("/lists/{id}/restaurants", listId)
+                        .with(user("api-user").roles("USER"))
+                        .contentType(JSON)
+                        .content(restaurantBody))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/lists/{id}/restaurants", listId)
+                        .with(user("api-user").roles("USER"))
+                        .contentType(JSON)
+                        .content(restaurantBody))
+                .andExpect(status().isConflict());
     }
 
     @Test

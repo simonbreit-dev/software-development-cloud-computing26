@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface RestaurantPort {
-    Page<Restaurant> findAll(int page, int size, RestaurantFilter filter);
+    Page<Restaurant> findAll(int page, int size, RestaurantFilter filter, java.util.List<String> sort);
     Optional<Restaurant> findById(UUID id);
     Restaurant create(Restaurant restaurant);
     Restaurant update(UUID id, Restaurant restaurant);

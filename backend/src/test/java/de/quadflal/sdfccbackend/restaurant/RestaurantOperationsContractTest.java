@@ -68,6 +68,44 @@ class RestaurantOperationsContractTest extends AbstractOpenApiContractTest {
     }
 
     @Test
+    @DisplayName("GET /restaurants respects the sort query parameter")
+    void listRestaurantsRespectsSortParameter() throws Exception {
+        // Use a unique search term so the sort assertion only sees these two fixtures.
+        mockMvc.perform(post("/restaurants")
+                        .with(user("api-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "name": "ZZZ-SortFixture"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/restaurants")
+                        .with(user("api-user").roles("USER"))
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "name": "AAA-SortFixture"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/restaurants")
+                        .queryParam("search", "SortFixture")
+                        .queryParam("sort", "name,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("AAA-SortFixture"))
+                .andExpect(jsonPath("$.content[1].name").value("ZZZ-SortFixture"));
+
+        mockMvc.perform(get("/restaurants")
+                        .queryParam("search", "SortFixture")
+                        .queryParam("sort", "name,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].name").value("ZZZ-SortFixture"))
+                .andExpect(jsonPath("$.content[1].name").value("AAA-SortFixture"));
+    }
+
+    @Test
     @DisplayName("GET /restaurants/{id} is public and returns 200")
     void getRestaurantByIdReturns200() throws Exception {
         mockMvc.perform(get("/restaurants/{id}", RESOURCE_ID))
