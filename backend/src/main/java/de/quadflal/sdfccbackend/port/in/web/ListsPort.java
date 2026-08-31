@@ -1,5 +1,6 @@
 package de.quadflal.sdfccbackend.port.in.web;
 
+import de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult;
 import de.quadflal.sdfccbackend.core.model.Page;
 import de.quadflal.sdfccbackend.core.model.Restaurant;
 import de.quadflal.sdfccbackend.core.model.RestaurantList;
@@ -14,6 +15,6 @@ public interface ListsPort {
     RestaurantList update(UUID id, RestaurantList restaurantList);
     void deleteById(UUID id);
     Page<Restaurant> findRestaurantsByListId(UUID listId, int page, int size);
-    boolean addRestaurantToList(UUID listId, UUID restaurantId);
+    AddRestaurantToListResult addRestaurantToList(UUID listId, UUID restaurantId);
     boolean removeRestaurantFromList(UUID listId, UUID restaurantId);
 }

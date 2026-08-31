@@ -68,7 +68,8 @@ public class RestaurantController implements RestaurantsApi {
         de.quadflal.sdfccbackend.core.model.Page<Restaurant> result = restaurantPort.findAll(
                 page != null ? page : 0,
                 size != null ? size : 20,
-                filter
+                filter,
+                sort
         );
         RestaurantPage pageResponse = new RestaurantPage();
         pageResponse.setContent(result.content().stream().map(this::convert).toList());

@@ -1,5 +1,6 @@
 package de.quadflal.sdfccbackend.port.out.persistence;
 
+import de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult;
 import de.quadflal.sdfccbackend.core.model.Page;
 import de.quadflal.sdfccbackend.core.model.PageRequest;
 import de.quadflal.sdfccbackend.core.model.Restaurant;
@@ -21,7 +22,7 @@ public interface ListPersistencePort {
 
     Page<Restaurant> findRestaurantsByListId(UUID listId, PageRequest pageRequest);
 
-    boolean addRestaurantToList(UUID listId, UUID restaurantId);
+    AddRestaurantToListResult addRestaurantToList(UUID listId, UUID restaurantId);
 
     boolean removeRestaurantFromList(UUID listId, UUID restaurantId);
 

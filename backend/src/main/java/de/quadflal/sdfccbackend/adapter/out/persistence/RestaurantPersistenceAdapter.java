@@ -8,12 +8,22 @@ import de.quadflal.sdfccbackend.port.out.persistence.RestaurantPersistencePort;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public class RestaurantPersistenceAdapter implements RestaurantPersistencePort {
+
+    private static final Map<String, Comparator<RestaurantEntity>> SORTABLE_PROPERTIES = Map.of(
+            "name", Comparator.comparing(RestaurantEntity::getName, Comparator.nullsLast(Comparator.naturalOrder())),
+            "city", Comparator.comparing(RestaurantEntity::getCity, Comparator.nullsLast(Comparator.naturalOrder())),
+            "country", Comparator.comparing(RestaurantEntity::getCountry, Comparator.nullsLast(Comparator.naturalOrder())),
+            "createdAt", Comparator.comparing(RestaurantEntity::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())),
+            "updatedAt", Comparator.comparing(RestaurantEntity::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+    );
 
     private final RestaurantRepository restaurantRepository;
 
@@ -25,6 +35,7 @@ public class RestaurantPersistenceAdapter implements RestaurantPersistencePort {
     public Page<Restaurant> findAll(PageRequest pageRequest, RestaurantFilter filter) {
         List<RestaurantEntity> matching = restaurantRepository.findAll().stream()
                 .filter(entity -> filter == null || matchesFilter(entity, filter))
+                .sorted(toComparator(pageRequest.sort()))
                 .toList();
 
         List<Restaurant> content = matching.stream()
@@ -37,6 +48,22 @@ public class RestaurantPersistenceAdapter implements RestaurantPersistencePort {
         int totalPages = (int) Math.ceil((double) total / pageRequest.size());
 
         return new Page<>(content, pageRequest.page(), pageRequest.size(), total, totalPages);
+    }
+
+    private Comparator<RestaurantEntity> toComparator(List<String> sortCriteria) {
+        List<SortCriteriaParser.SortCriterion> criteria = SortCriteriaParser.parse(sortCriteria);
+        Comparator<RestaurantEntity> combined = null;
+        for (SortCriteriaParser.SortCriterion criterion : criteria) {
+            Comparator<RestaurantEntity> comparator = SORTABLE_PROPERTIES.get(criterion.property());
+            if (comparator == null) {
+                continue;
+            }
+            if (criterion.descending()) {
+                comparator = comparator.reversed();
+            }
+            combined = combined == null ? comparator : combined.thenComparing(comparator);
+        }
+        return combined != null ? combined : (a, b) -> 0;
     }
 
     @Override

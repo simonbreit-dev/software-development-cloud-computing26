@@ -63,7 +63,7 @@ public class ListsService implements ListsPort {
     }
 
     @Override
-    public boolean addRestaurantToList(UUID listId, UUID restaurantId) {
+    public de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult addRestaurantToList(UUID listId, UUID restaurantId) {
         return listPersistencePort.addRestaurantToList(listId, restaurantId);
     }
 

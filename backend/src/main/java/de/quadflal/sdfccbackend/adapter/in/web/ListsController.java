@@ -34,9 +34,12 @@ public class ListsController implements ListsApi {
 
     @Override
     public ResponseEntity<Void> addRestaurantToList(UUID id, AddRestaurantToListRequest addRestaurantToListRequest) {
-        boolean added = listsPort.addRestaurantToList(id, addRestaurantToListRequest.getRestaurantId());
-        if (!added) {
-            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND);
+        de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult result =
+                listsPort.addRestaurantToList(id, addRestaurantToListRequest.getRestaurantId());
+        switch (result) {
+            case NOT_FOUND -> throw new org.springframework.web.server.ResponseStatusException(HttpStatus.NOT_FOUND);
+            case ALREADY_EXISTS -> throw new org.springframework.web.server.ResponseStatusException(HttpStatus.CONFLICT, "Restaurant is already in this list");
+            case ADDED -> { }
         }
         return ResponseEntity.noContent().build();
     }

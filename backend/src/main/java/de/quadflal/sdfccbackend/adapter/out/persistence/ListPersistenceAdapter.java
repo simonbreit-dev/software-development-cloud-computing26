@@ -47,16 +47,11 @@ public class ListPersistenceAdapter implements ListPersistencePort {
     }
 
     private Sort toSort(List<String> sortCriteria) {
-        if (sortCriteria == null || sortCriteria.isEmpty()) {
-            return Sort.unsorted();
-        }
-
-        List<Sort.Order> orders = sortCriteria.stream()
-                .map(criterion -> criterion.split(",", 2))
-                .filter(parts -> parts.length > 0 && SORTABLE_PROPERTIES.contains(parts[0]))
-                .map(parts -> parts.length > 1 && "desc".equalsIgnoreCase(parts[1])
-                        ? Sort.Order.desc(parts[0])
-                        : Sort.Order.asc(parts[0]))
+        List<Sort.Order> orders = SortCriteriaParser.parse(sortCriteria).stream()
+                .filter(criterion -> SORTABLE_PROPERTIES.contains(criterion.property()))
+                .map(criterion -> criterion.descending()
+                        ? Sort.Order.desc(criterion.property())
+                        : Sort.Order.asc(criterion.property()))
                 .toList();
 
         return orders.isEmpty() ? Sort.unsorted() : Sort.by(orders);
@@ -105,19 +100,19 @@ public class ListPersistenceAdapter implements ListPersistencePort {
     }
 
     @Override
-    public boolean addRestaurantToList(UUID listId, UUID restaurantId) {
+    public de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult addRestaurantToList(UUID listId, UUID restaurantId) {
         RestaurantListEntity list = restaurantListRepository.findById(listId).orElse(null);
         if (list == null) {
-            return false;
+            return de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult.NOT_FOUND;
         }
 
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId).orElse(null);
         if (restaurant == null) {
-            return false;
+            return de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult.NOT_FOUND;
         }
 
         if (restaurantListRestaurantRepository.existsByRestaurantListIdAndRestaurantId(listId, restaurantId)) {
-            return true;
+            return de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult.ALREADY_EXISTS;
         }
 
         RestaurantListRestaurantEntity row = new RestaurantListRestaurantEntity(
@@ -131,7 +126,7 @@ public class ListPersistenceAdapter implements ListPersistencePort {
         list.setRestaurantCount((int) restaurantListRestaurantRepository.countByRestaurantListId(listId));
         list.setUpdatedAt(OffsetDateTime.now());
         restaurantListRepository.save(list);
-        return true;
+        return de.quadflal.sdfccbackend.core.model.AddRestaurantToListResult.ADDED;
     }
 
     @Override
