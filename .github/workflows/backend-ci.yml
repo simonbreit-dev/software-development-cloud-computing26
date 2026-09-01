@@ -140,6 +140,8 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: type=gha,scope=backend-image
+          cache-to: type=gha,mode=max,scope=backend-image,ignore-error=true
           sbom: ${{ github.event_name == 'push' }}
           provenance: ${{ github.event_name == 'push' }}
 

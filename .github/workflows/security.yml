@@ -78,8 +78,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build backend image
-        run: docker build -f backend/Dockerfile -t "${BACKEND_IMAGE}" .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          load: true
+          tags: ${{ env.BACKEND_IMAGE }}
+          cache-from: |
+            type=gha,scope=backend-image
+            type=gha,scope=backend-security
+          cache-to: type=gha,mode=max,scope=backend-security,ignore-error=true
 
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0

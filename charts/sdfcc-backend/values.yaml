@@ -70,6 +70,9 @@ config:
   OTEL_TRACES_EXPORTER: "none"
   OTEL_METRICS_EXPORTER: "none"
   OTEL_LOGS_EXPORTER: "none"
+  # Production deployments must use stable keys supplied through secret.data
+  # or secret.existingSecretName. Local Compose explicitly disables this guard.
+  JWT_REQUIRE_CONFIGURED_KEYS: "true"
 
 # Sensitive configuration rendered into a Secret and loaded with envFrom.
 # Leave values empty here and provide them through your Flux HelmRelease values,

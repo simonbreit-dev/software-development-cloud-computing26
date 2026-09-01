@@ -1,6 +1,6 @@
 # Operations Runbook
 
-This runbook covers the small, repeatable operational procedures supported by the repository. The application is not production-ready yet: login still returns a dummy token, no deployment-time user bootstrap exists, and Hibernate `ddl-auto=update` is used instead of managed database migrations.
+This runbook covers the small, repeatable operational procedures supported by the repository. The application is not production-ready yet: no deployment-time user bootstrap exists, and Hibernate `ddl-auto=update` is used instead of managed database migrations.
 
 ## Release inputs
 
@@ -9,7 +9,18 @@ A release consists of two OCI artifacts published by `backend-ci.yml`:
 - Image: `ghcr.io/simonbreit-dev/software-development-cloud-computing26/sdfcc-backend:<tag>`
 - Chart: `oci://ghcr.io/simonbreit-dev/software-development-cloud-computing26/charts/sdfcc-backend`
 
-Use immutable `sha-<commit>` image tags for deployments. Keep environment-specific values outside the chart and provide database credentials through an existing Kubernetes Secret. At minimum, override `APP_SECURITY_CORS_ALLOWED_ORIGINS` and configure OTLP exporters only when a collector is reachable in the cluster.
+Use immutable `sha-<commit>` image tags for deployments. Keep environment-specific values outside the chart and provide database credentials plus `JWT_PRIVATE_KEY_PEM` and `JWT_PUBLIC_KEY_PEM` through an existing Kubernetes Secret. The JWT private key must be PKCS#8 PEM, the public key must be X.509 PEM, and every replica must receive the same pair. At minimum, override `APP_SECURITY_CORS_ALLOWED_ORIGINS` and configure OTLP exporters only when a collector is reachable in the cluster.
+
+For Docker Compose, generate the persistent local key files once before starting the backend:
+
+```bash
+mkdir -p .secrets
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out .secrets/jwt-private.pem
+openssl pkey -in .secrets/jwt-private.pem -pubout -out .secrets/jwt-public.pem
+chmod 600 .secrets/jwt-private.pem .secrets/jwt-public.pem
+```
+
+The `.secrets` directory is ignored by Git. Compose mounts these files read-only and requires them; preserve and back them up if access tokens must remain valid across host rebuilds. Recreating or restarting only the container does not replace the keys.
 
 ## GitOps deployment
 
@@ -78,8 +89,8 @@ Set recovery objectives with the database operator; the repository does not curr
 
 1. Check `/actuator/health/liveness` and `/actuator/health/readiness`. Readiness includes PostgreSQL connectivity.
 2. Inspect the deployment rollout, pod events, restarts, and previous container logs.
-3. Confirm the database Secret keys and network reachability.
+3. Confirm the database and JWT Secret keys plus database network reachability.
 4. Confirm the deployed image tag and chart revision match the intended commit.
 5. Check Alloy and Grafana only after application and database health are established; telemetry failure should not be mistaken for application failure.
 
-Rotate database and Grafana credentials in their owning secret stores, update the deployment, and verify readiness before revoking the old credentials. Application-user credential rotation cannot be documented until real authentication and user bootstrap are implemented.
+Rotate database, JWT, and Grafana credentials in their owning secret stores, update the deployment, and verify readiness before revoking the old credentials. Rotating the JWT pair immediately invalidates existing access tokens. Application-user credential rotation cannot be documented until deployment-time user bootstrap is implemented.

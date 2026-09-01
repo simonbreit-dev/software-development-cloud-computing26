@@ -74,6 +74,9 @@ public class SecurityConfig {
                         // Operational endpoints
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
 
+                        // API documentation
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**").permitAll()
+
                         // New endpoints must be explicitly classified above.
                         .anyRequest().denyAll())
                 .exceptionHandling(exceptions -> exceptions

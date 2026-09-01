@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
       args:
-        MAVEN_BUILD_ARGS: ${MAVEN_BUILD_ARGS:--DskipTests}
+        MAVEN_BUILD_ARGS: ${MAVEN_BUILD_ARGS:--Dmaven.test.skip=true}
     image: ${BACKEND_IMAGE:-sdfcc-backend:local}
     restart: unless-stopped
     depends_on:
@@ -23,6 +23,9 @@ services:
       DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://postgres:5432/sdfcc}
       DATABASE_USERNAME: ${DATABASE_USERNAME:-sdfcc}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-sdfcc}
+      JWT_REQUIRE_CONFIGURED_KEYS: "true"
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: /run/secrets/jwt-public.pem
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:-org.hibernate.dialect.PostgreSQLDialect}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-sdfcc-backend}
       OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-service.namespace=sdfcc,deployment.environment=local}
@@ -33,8 +36,20 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
       OTEL_METRIC_EXPORT_INTERVAL: ${OTEL_METRIC_EXPORT_INTERVAL:-15000}
       JAVA_OPTS: ${JAVA_OPTS:-}
+    secrets:
+      - source: jwt_private_key
+        target: jwt-private.pem
+      - source: jwt_public_key
+        target: jwt-public.pem
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "--silent",
+          "http://localhost:8080/actuator/health/readiness",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -72,3 +87,9 @@ networks:
 
 volumes:
   postgres_data:
+
+secrets:
+  jwt_private_key:
+    file: ${JWT_PRIVATE_KEY_FILE:-./.secrets/jwt-private.pem}
+  jwt_public_key:
+    file: ${JWT_PUBLIC_KEY_FILE:-./.secrets/jwt-public.pem}

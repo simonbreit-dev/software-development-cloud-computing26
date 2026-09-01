@@ -1,4 +1,7 @@
 # Non-production values used only to lint and render the chart in CI.
+config:
+  JWT_REQUIRE_CONFIGURED_KEYS: "false"
+
 secret:
   enabled: true
   data:

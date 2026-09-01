@@ -37,7 +37,16 @@ cd backend && ./mvnw -B clean verify
 docker build -f backend/Dockerfile -t sdfcc-backend:local .
 ```
 
+Local image builds require Docker Buildx so Maven dependency layers can use the
+modern BuildKit cache. The production image build skips both test execution and
+test compilation because the Maven verification job runs the full test suite
+before the image is published. Only `backend/src/main` is copied into the image
+build, so changes limited to tests or generator configuration do not invalidate
+the application compilation layer.
+
 Generated OpenAPI sources are committed under `backend/src/main/java/.../generated`. Do not edit them manually; update `openApiSpec.yaml`, run `make generate`, and commit the regenerated files.
+
+When the backend is running locally, its runtime-generated OpenAPI JSON is available at `http://localhost:8080/v3/api-docs`.
 
 ### Required GitHub Settings
 

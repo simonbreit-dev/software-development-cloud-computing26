@@ -81,5 +81,12 @@ values can and should be validated while rendering.
       {{- fail (printf "secret.data.%s must be non-empty when the chart generates the database Secret" $key) -}}
     {{- end -}}
   {{- end -}}
+  {{- if eq (lower (toString (get .Values.config "JWT_REQUIRE_CONFIGURED_KEYS"))) "true" -}}
+    {{- range $key := list "JWT_PRIVATE_KEY_PEM" "JWT_PUBLIC_KEY_PEM" -}}
+      {{- if not (get $.Values.secret.data $key) -}}
+        {{- fail (printf "secret.data.%s must be non-empty when JWT_REQUIRE_CONFIGURED_KEYS is true" $key) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
 {{- end }}

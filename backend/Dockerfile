@@ -8,14 +8,12 @@ COPY backend/.mvn ./.mvn
 COPY backend/mvnw backend/pom.xml ./
 
 RUN chmod +x ./mvnw
-RUN ./mvnw -B -DskipTests dependency:go-offline
+RUN ./mvnw -B -ntp -Dmaven.test.skip=true dependency:go-offline
 
-COPY openApiSpec.yaml /workspace/openApiSpec.yaml
-COPY backend/api ./api
-COPY backend/src ./src
+COPY backend/src/main ./src/main
 
-ARG MAVEN_BUILD_ARGS="-DskipTests"
-RUN ./mvnw -B ${MAVEN_BUILD_ARGS} package && \
+ARG MAVEN_BUILD_ARGS="-Dmaven.test.skip=true"
+RUN ./mvnw -B -ntp ${MAVEN_BUILD_ARGS} package && \
     cp target/*.jar /tmp/sdfcc-backend.jar
 
 FROM eclipse-temurin:21-jre-jammy AS runtime
