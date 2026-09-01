@@ -4,6 +4,7 @@ import de.quadflal.sdfccbackend.AbstractOpenApiContractTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,7 +23,39 @@ class AuthOperationsContractTest extends AbstractOpenApiContractTest {
                                   "password": "password123"
                                 }
                                 """))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value(org.hamcrest.Matchers.matchesPattern("^[\\w-]+\\.[\\w-]+\\.[\\w-]+$")))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").value(3600));
+    }
+
+    @Test
+    @DisplayName("POST /auth/login issues a token that authenticates against protected endpoints")
+    void loginTokenAuthenticatesProtectedEndpoint() throws Exception {
+        String response = mockMvc.perform(post("/auth/login")
+                        .contentType(JSON)
+                        .content("""
+                                {
+                                  "usernameOrEmail": "user@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String accessToken = com.jayway.jsonpath.JsonPath.read(response, "$.accessToken");
+
+        mockMvc.perform(get("/users/me")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("demo-user"));
+    }
+
+    @Test
+    @DisplayName("Protected endpoint rejects an invalid bearer token")
+    void protectedEndpointRejectsInvalidToken() throws Exception {
+        mockMvc.perform(get("/users/me")
+                        .header("Authorization", "Bearer not-a-real-token"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
