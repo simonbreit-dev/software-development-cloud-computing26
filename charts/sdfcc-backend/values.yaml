@@ -72,6 +72,10 @@ secret:
     SPRING_DATASOURCE_URL: ""
     SPRING_DATASOURCE_USERNAME: ""
     SPRING_DATASOURCE_PASSWORD: ""
+    # PKCS#8 private key and X.509 public key in PEM format. Provide the same
+    # values to every replica, preferably through an existing managed Secret.
+    JWT_PRIVATE_KEY_PEM: ""
+    JWT_PUBLIC_KEY_PEM: ""
 
 service:
   # ClusterIP example for internal access or Kubernetes Ingress:
