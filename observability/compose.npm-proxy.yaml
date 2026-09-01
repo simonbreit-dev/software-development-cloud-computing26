@@ -1,0 +1,10 @@
+services:
+  grafana:
+    networks:
+      - observability
+      - npm_proxy
+
+networks:
+  npm_proxy:
+    external: true
+    name: ${NPM_PROXY_NETWORK:-npm_proxy}

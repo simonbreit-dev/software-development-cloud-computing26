@@ -65,3 +65,21 @@ Secret name used for envFrom.
 {{- define "sdfcc-backend.secretName" -}}
 {{- default (printf "%s-secret" (include "sdfcc-backend.fullname" .)) .Values.secret.existingSecretName }}
 {{- end }}
+
+{{/*
+Fail rendering instead of deploying a backend with missing database settings.
+An existing Secret is validated by Kubernetes at runtime; generated Secret
+values can and should be validated while rendering.
+*/}}
+{{- define "sdfcc-backend.validateValues" -}}
+{{- if not .Values.secret.existingSecretName -}}
+  {{- if not .Values.secret.enabled -}}
+    {{- fail "secret.existingSecretName must be set when secret.enabled is false" -}}
+  {{- end -}}
+  {{- range $key := list "SPRING_DATASOURCE_URL" "SPRING_DATASOURCE_USERNAME" "SPRING_DATASOURCE_PASSWORD" -}}
+    {{- if not (get $.Values.secret.data $key) -}}
+      {{- fail (printf "secret.data.%s must be non-empty when the chart generates the database Secret" $key) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end }}

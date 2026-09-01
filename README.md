@@ -50,4 +50,6 @@ Recommended branch protection for `main`:
 - Require branches to be up to date before merging.
 - Block force pushes and deletions.
 
-The backend currently permits `/actuator/health` in security configuration, but `spring-boot-starter-actuator` is not present and the container is not self-contained for runtime health checks. Add actuator and a CI-safe runtime configuration before enabling a Docker smoke test against `/actuator/health`.
+The backend exposes Actuator liveness and database-aware readiness endpoints. Compose and Helm use those endpoints for health checks, and pull requests run a built-container smoke test.
+
+Deployment, rollback, database backup/restore, and incident checks are documented in [OPERATIONS.md](OPERATIONS.md). Authentication and managed schema migrations remain prerequisites for a production release.
