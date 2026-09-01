@@ -20,7 +20,10 @@ RUN ./mvnw -B ${MAVEN_BUILD_ARGS} package && \
 
 FROM eclipse-temurin:21-jre-jammy AS runtime
 
-RUN groupadd --system spring && \
+RUN apt-get update && \
+    apt-get install --yes --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd --system spring && \
     useradd --system --gid spring --home-dir /app --shell /usr/sbin/nologin spring
 
 WORKDIR /app

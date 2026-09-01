@@ -8,6 +8,9 @@ on:
       - "openApiSpec.yaml"
       - "Makefile"
       - ".dockerignore"
+      - ".env.example"
+      - "docker-compose*.yml"
+      - "observability/**"
       - ".github/workflows/backend-ci.yml"
   push:
     branches:
@@ -20,6 +23,9 @@ on:
       - "openApiSpec.yaml"
       - "Makefile"
       - ".dockerignore"
+      - ".env.example"
+      - "docker-compose*.yml"
+      - "observability/**"
       - ".github/workflows/backend-ci.yml"
 
 permissions:
@@ -97,6 +103,10 @@ jobs:
           path: backend/target/*.jar
           if-no-files-found: ignore
 
+      - name: Set up QEMU for multi-platform publishing
+        if: github.event_name == 'push'
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -110,6 +120,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=ci,enable=${{ github.event_name == 'pull_request' }}
 
       - name: Log in to GitHub Container Registry
         if: github.event_name == 'push'
@@ -124,15 +135,31 @@ jobs:
         with:
           context: .
           file: backend/Dockerfile
+          platforms: ${{ github.event_name == 'push' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+          sbom: ${{ github.event_name == 'push' }}
+          provenance: ${{ github.event_name == 'push' }}
 
-  helm-chart:
-    name: Package and publish Helm chart
+      - name: Smoke test built image
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          cleanup() {
+            BACKEND_IMAGE="${REGISTRY}/${IMAGE_NAME}:ci" docker compose -f docker-compose.yml down --volumes
+            docker network rm observability_observability || true
+          }
+          trap cleanup EXIT
+
+          docker network create observability_observability
+          BACKEND_IMAGE="${REGISTRY}/${IMAGE_NAME}:ci" docker compose -f docker-compose.yml up --detach --no-build --wait --wait-timeout 180
+          curl --fail --silent http://127.0.0.1:8080/actuator/health/readiness
+
+  deployment-config:
+    name: Validate deployment configuration
     runs-on: ubuntu-latest
-    needs: backend
-    if: github.event_name == 'push'
 
     steps:
       - name: Checkout
@@ -141,8 +168,34 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
-      - name: Lint Helm chart
-        run: helm lint "${CHART_PATH}"
+      - name: Validate Compose configurations
+        run: |
+          docker compose config --quiet
+          docker compose --profile bundled-postgres config --quiet
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f observability/compose.yaml config --quiet
+
+      - name: Lint and render Helm chart
+        run: |
+          helm lint "${CHART_PATH}" -f "${CHART_PATH}/examples/values-ci.yaml"
+          helm template sdfcc-backend "${CHART_PATH}" -f "${CHART_PATH}/examples/values-ci.yaml" >/dev/null
+          helm template sdfcc-backend "${CHART_PATH}" -f "${CHART_PATH}/examples/values-ci.yaml" -f "${CHART_PATH}/examples/values-ingress.yaml" >/dev/null
+          helm template sdfcc-backend "${CHART_PATH}" -f "${CHART_PATH}/examples/values-ci.yaml" -f "${CHART_PATH}/examples/values-npm-nodeport.yaml" >/dev/null
+
+  helm-chart:
+    name: Package and publish Helm chart
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+      - deployment-config
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
 
       - name: Compute Helm chart version
         id: chart-version

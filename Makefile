@@ -36,7 +36,7 @@ help:
 	@echo ""
 	@echo "Usage: make <target>"
 	@echo ""
-	@grep -E '^## ' MAKEFILE | sed 's/## /  /'
+	@grep -E '^## ' Makefile | sed 's/## /  /'
 	@echo ""
 
 ## generate: Generate Spring Boot API stubs from openApiSpec.yaml via Docker

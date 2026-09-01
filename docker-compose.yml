@@ -9,12 +9,17 @@ services:
         MAVEN_BUILD_ARGS: ${MAVEN_BUILD_ARGS:--DskipTests}
     image: ${BACKEND_IMAGE:-sdfcc-backend:local}
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
     ports:
       - "${BACKEND_HTTP_BIND:-127.0.0.1:8080}:8080"
     environment:
       SERVER_PORT: 8080
       SPRING_APPLICATION_NAME: ${SPRING_APPLICATION_NAME:-sdfcc-backend}
       DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT:-local}
+      APP_SECURITY_CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       DATABASE_URL: ${DATABASE_URL:-jdbc:postgresql://postgres:5432/sdfcc}
       DATABASE_USERNAME: ${DATABASE_USERNAME:-sdfcc}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-sdfcc}
@@ -28,6 +33,12 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-grpc}
       OTEL_METRIC_EXPORT_INTERVAL: ${OTEL_METRIC_EXPORT_INTERVAL:-15000}
       JAVA_OPTS: ${JAVA_OPTS:-}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     networks:
       - app
       - observability

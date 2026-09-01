@@ -1,0 +1,7 @@
+# Non-production values used only to lint and render the chart in CI.
+secret:
+  enabled: true
+  data:
+    SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/sdfcc
+    SPRING_DATASOURCE_USERNAME: chart-validation
+    SPRING_DATASOURCE_PASSWORD: chart-validation-only

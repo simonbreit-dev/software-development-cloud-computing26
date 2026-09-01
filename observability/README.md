@@ -48,7 +48,7 @@ Alloy is the central ingest point. Prometheus, Loki, and Tempo stay internal to 
 
 ## Quick Start
 
-Create your environment file:
+Run the following commands from the repository root. Create your environment file:
 
 ```bash
 cp .env.example .env
@@ -69,13 +69,13 @@ OBSERVABILITY_NETWORK=observability_observability
 Start the stack:
 
 ```bash
-docker compose up -d
+docker compose --env-file .env -f observability/compose.yaml up -d
 ```
 
 Check status:
 
 ```bash
-docker compose ps
+docker compose --env-file .env -f observability/compose.yaml ps
 docker logs alloy
 docker logs prometheus
 ```
@@ -93,7 +93,9 @@ The base stack does not require an external proxy network. If Grafana should be 
 
 ```bash
 docker network create npm_proxy
-docker compose -f compose.yaml -f compose.npm-proxy.yaml up -d
+docker compose --env-file .env \
+  -f observability/compose.yaml \
+  -f observability/compose.npm-proxy.yaml up -d
 ```
 
 Set this when your NPM network has a different name:
@@ -238,7 +240,7 @@ nc -vz 127.0.0.1 4317
 nc -vz 127.0.0.1 4318
 ```
 
-If `ALLOY_OTLP_GRPC_BIND=4317` and `ALLOY_OTLP_HTTP_BIND=4318`, Alloy listens on all host interfaces for those ports. Use `127.0.0.1:4317` and `127.0.0.1:4318` in `.env` for host-local ingest only.
+The example environment binds OTLP ports to `127.0.0.1` for host-local ingest. Containers on the shared observability network can still send directly to `alloy:4317` or `alloy:4318`. Only remove the loopback address when remote hosts must send telemetry, and protect that exposure with network controls and authenticated TLS termination.
 
 ## Verify In Grafana
 
