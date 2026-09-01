@@ -8,6 +8,9 @@ GitOps repository: `/Users/simonbreit/Projects/sdfcc-gitops`
 
 Target: deploy SDFCC to the existing local Colima/K3s cluster through Flux and a separate GitOps repository.
 
+The operator-facing execution sequence is maintained separately in
+`LOCAL_K8S_FLUX_MANUAL_CHECKLIST.md`.
+
 ## Current verdict
 
 The repository-side preparation is complete enough to publish for review, but deployment remains deliberately blocked by four manual gates:
